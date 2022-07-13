@@ -1,0 +1,53 @@
+html{
+  scroll-behavior: smooth;
+}
+
+.wid{
+  max-width: 400px;
+}
+
+.wid2{
+  max-width: 600px;
+}
+
+.wid3{
+  max-width: 300px;
+  margin: auto;
+}
+
+.login{
+  text-align: center;
+  margin: auto;
+  max-width: 400px;
+}
+
+.signup{
+  text-align: center;
+  margin: auto;
+  max-width: 600px;
+}
+
+.card{
+  margin: auto;
+  text-align: center;
+}
+
+p{
+  margin: 0;
+}
+
+.card-header p{
+  font-size: 27px;
+}
+
+.form-check{
+  text-align: left;
+}
+
+.container .row .col-md-3 .txtcent{
+  text-align: center;
+}
+
+
+
+

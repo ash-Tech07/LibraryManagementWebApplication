@@ -1,0 +1,21 @@
+{
+  "name": "libapp_v1",
+  "version": "1.0.0",
+  "description": "A library management web application developed and maintained by MIT, Anna University.",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "author": "Ashwin A",
+  "license": "ISC",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "body-parser": "^1.20.0",
+    "ejs": "^3.1.8",
+    "express": "^4.18.1",
+    "express-validator": "^6.14.2",
+    "mysql": "^2.18.1",
+    "nodemon": "^2.0.19"
+  }
+}
