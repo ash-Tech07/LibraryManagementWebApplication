@@ -30,43 +30,12 @@
       <!-- NAVBAR LINKS -->
       <div class="collapse navbar-collapse justify-content-end me-auto" id="navbarText">
         <ul class="navbar-nav me-5">
-          <li class="nav-item"> <a class="nav-link active" aria-current="page" href="#">HOME</a></li>
-          <li class="nav-item"> <a class="nav-link" href="#signup">SIGN UP</a></li>
+          <li class="nav-item"> <a class="nav-link" href="/login">LOGIN</a></li>
           <li class="nav-item"> <a class="nav-link" href="#home">ABOUT</a></li>
         </ul>
       </div>
     </div>
   </div>
-
-  <!-- LOGIN PAGE -->
-  <div class="card mt-5 wid" style="max-width: 400px;" id="home">
-    <div class="card-header">
-      <p>Log In</p>
-    </div>
-    <div class="card-body">
-      <div class="login mt-4">
-        <form action= "/home" method="POST">
-          <div class="form-floating mb-3">
-            <input name="libid" type="text" id="libId" class="form-control" placeholder="10101" required>
-            <label for="libId">Library ID</label>
-            <p class="small text-danger"><%= lUserErr %></p>
-          </div>
-          <div class="form-floating mb-3">
-            <input name="lpass" type="password" id="pass" class="form-control" placeholder="Password" required>
-            <label for="placeValuePassword">Password</label>
-            <p class="small text-danger"><%= lPassErr %></p>
-          </div>
-          <div class="form-check mb-4">
-            <input type="checkbox" class="fomr-check-input" id="placeValueBox">
-            <label style="text-align:left;" for="placeValueBox">Remember me</label>
-          </div>
-          <button type="submit" class="btn btn-primary btn-lg" name="log_btn">Log In</button>
-        </form>
-      </div>
-    </div>
-  </div>
-
-  <br><br><br><br><br><br>
 
   <!-- SIGNUP PAGE -->
   <div class="card mt-5 wid2" id="signup">
@@ -76,7 +45,7 @@
     <div class="card-body">
       <div class="signup mt-4">
 
-        <form action="/newUserSignUp" class="row g-3" method="POST">
+        <form action="/signUp" class="row g-3" method="POST">
           <div class="col-md-12 wid3">
             <label for="user" class="form-label">User Type</label>
             <select id="user" class="form-select" name="userType">

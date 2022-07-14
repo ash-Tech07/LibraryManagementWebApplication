@@ -17,9 +17,7 @@ function addBook(id) {
                 tableRef.deleteRow(i+1);
                 i--;
             }
-        }
-        
-        
+        }    
     } else { 
         document.getElementById(id).classList.add("active");
         noOfBooksSelected += 1;
