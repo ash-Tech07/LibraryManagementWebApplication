@@ -126,17 +126,20 @@ function searchDB(searchValue, searchFactor, connection) {
  }
 
 //Function to update the no of copies of borrowed books
-function updateCopies(books, connection) {
+function updateCopies(isbnArr, connection) {
     return new Promise(function (resolve, reject) { 
-        const updateQuery = "UPDATE librarymanagement.books SET noOfCopies = noOfCopies - 1 WHERE isbn = ? and noOfCopies > 0";
-        for (let isbn in books) { 
-            connection.query(updateQuery, [i], function (err, rows) {
-                if (err) { 
-                    return reject(err);
-                }
-                resolve("Success");
-            });
+        var updateQuery = "UPDATE librarymanagement.books SET noOfCopies = noOfCopies - 1 WHERE noOfCopies > 0 AND ( ";
+        for (let i in isbnArr) { 
+            updateQuery += "isbn = " + isbnArr[i] + " OR "; 
         }
+        
+        updateQuery = updateQuery.substring(0, updateQuery.length - 4) + ")";
+        connection.query(updateQuery, [isbnArr], function (errU, result) { 
+            if (errU) { 
+                return reject(errU);
+            }
+            resolve("Success");
+        });
     });
 }
 
@@ -297,7 +300,6 @@ app.post("/dashboard", validateSearchConfig, function (req, res){
     sconnect().then(function (resQ) {
         searchDB(req.body.searchBar, req.body.searchFactor, resQ).then(function (searchResults) {
             const searchConfig = [{ 'searchTag': req.body.searchFactor, 'searchBarText': req.body.searchBar, 'noOfSearchResults': Object.keys(searchResults).length}];
-            // console.log(req);
             res.render('dashboard', { searchData: searchResults, searchConfig: searchConfig, prevBooksData: defPrevBooksData });
         }).catch(errDB => console.log(errDB));
     }).catch(errCBD => console.log(errCBD));
@@ -305,18 +307,22 @@ app.post("/dashboard", validateSearchConfig, function (req, res){
  });
 
 //Selecting and update the no of copies
-app.post("/confirmBooks", function (req, res){
+app.post("/confirmBooks", function (req, res) {
     const booksArray = req.body['booksSelected'].split(" ");
-    res.send(booksArray);
-    // res.render('confirmPage');
-
-    // sconnect().then(function (resL) {
-    //     updateCopies(booksArray, resL).then(function (msg) { 
-            
-    //     })
-
-    // }).catch(errU1 => console.log(errU1));
+    sconnect().then(function (resS) {
+        updateCopies(booksArray, resS).then(function (stat) {
+            getBookDetails(req.body['booksSelected'], resS).then(function (bookData) {
+                res.render('confirmBooks', { borrowedBookData: bookData });
+            }).catch(errT => console.log(errT));
+        }).catch(err => console.log(err));
+}).catch(errC => console.log(errC));
+    
 });
+
+//Sending the confirmation page on get request
+// app.get("/confirmBooks", function (req, res) { 
+//     res.render('confirmBooks', {});
+// });
 
 // Listening to port 3000
 app.listen(3000, function(){
