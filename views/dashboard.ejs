@@ -141,9 +141,10 @@
                 <th>Fine</th>
             </tr>
         </thead>
-        <tbody>
-            <% if (prevBooksData) { %>
-                <% for (let data in prevBooksData){ %>
+
+        <% if (prevBooksData) { %>
+            <% for (let data in prevBooksData){ %>
+                <tbody>
                     <tr>
                         <td>
                             <%= Number(data) + 1 %>
@@ -176,8 +177,9 @@
                             <%= prevBooksData[data]['fine'] %>
                         </td>
                     </tr>
-                    <% } } %>
-        </tbody>
+                </tbody>
+            <% } } %>
+        
     </table>
         
 

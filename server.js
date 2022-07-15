@@ -177,6 +177,38 @@ function getBookDetails(isbns, connection) {
     });
 }
 
+// Function to get all the student users
+function getStudUsers(connection) { 
+    return new Promise(function (resolve, reject) { 
+
+        const getAllUserQuery = "SELECT firstName, uniqueNum FROM librarymanagement.libusers WHERE userType = 'Student'";
+        connection.query(getAllUserQuery, function (err, userData) {
+            if (err) {
+                return reject(err);
+            }
+            resolve(userData);
+        });
+
+    });
+}
+
+//Function to get all the pending books of all users
+function getPendingBooks(studData, connection) {
+    return new Promise(function (resolve, reject) { 
+        let pendingBooksQuery = "";
+        for (let i in studData) { 
+            pendingBooksQuery += "SELECT * FROM librarymanagement." + studData[i]['firstName'] + studData[i]['uniqueNum'] + " UNION ";
+        }
+        pendingBooksQuery = pendingBooksQuery.substring(0, pendingBooksQuery.length - 7);
+        connection.query(pendingBooksQuery, function (err1, usersPendingBooks) {
+            if (err1) {
+                return reject(err1);
+            } 
+            resolve(usersPendingBooks);  
+        });
+    });
+}
+
 
 // Sending the loginpage on get request  
 app.get("/login", function(_req, res){
@@ -319,10 +351,24 @@ app.post("/confirmBooks", function (req, res) {
     
 });
 
-//Sending the confirmation page on get request
-// app.get("/confirmBooks", function (req, res) { 
-//     res.render('confirmBooks', {});
-// });
+//Sending the staff homepage on get request
+app.get("/staff", function (req, res) { 
+    var pendingBooks = [];
+    sconnect().then(function (resS) { 
+        getStudUsers(resS).then(function (userData) { 
+            console.log(userData);
+            getPendingBooks(userData, resS).then(function (eachPendingBooks) {
+                pendingBooks[0] = eachPendingBooks;
+                //console.log("PEND: " + eachPendingBooks);
+                res.render('staff', { pendingBooks: pendingBooks });
+                // res.send(pendingBooks);
+            }).catch(err1 => console.log(err1));
+                
+        }).catch(err3 => console.log(err3));
+
+        
+    }).catch(err => console.log(err));
+});
 
 // Listening to port 3000
 app.listen(3000, function(){
