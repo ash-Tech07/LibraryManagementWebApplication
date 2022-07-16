@@ -6,7 +6,7 @@ const bcrypt = require("bcryptjs");
 const ejs = require("ejs");
 const { body, validationResult } = require("express-validator");
 const e = require("express");
-const { DATE } = require("sequelize");
+const { DATE, and } = require("sequelize");
 const db_config = {
     host: 'localhost',
     user: 'root',
@@ -24,7 +24,7 @@ const validateSignUpConfig = [  body('fname').trim().escape().isLength({min:3}).
 const validateSearchConfig = [body('searchBar').trim().escape().toLowerCase()];   
 const defSearch = [{ 'name': '12 Rule to Learn to Code', 'author': 'Angele Yu', 'year': '2020', 'genre': 'education', 'price': '378.12', 'isbn': '9798671342703', 'noOfCopies': 1 }];
 const defSearchConfig = [{ 'searchTag': 'Search By:', 'searchBarText': '' }];
-var defPrevBooksData = [];                     
+var defPrevBooksData = {};                     
 
 
 // Setting the express environment
@@ -50,7 +50,7 @@ function sconnect(){
 // Function to get pass from DB
 function exeLogin(id, connection){
     return new Promise(function (resolve, reject){
-        const lQuery = "SELECT firstName, uniqueNum, pass FROM librarymanagement.libusers WHERE libid = ?";
+        const lQuery = "SELECT libid, pass, userType FROM librarymanagement.libusers WHERE libid = ?";
         connection.query(lQuery, [ id ], function(err1, rows){
             if(err1){
                 return reject(err1);
@@ -85,17 +85,11 @@ function newLibId(connection){
 function signupInsert(dataArr, connection){
     return new Promise(function (resolve, reject) {
         const insertQuery = "INSERT INTO librarymanagement.libusers (userType, firstName, lastName, email, pass, roll, dept, uniqueNum, dob, created, libid) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-        const newUserTableQuery = "CREATE TABLE "+ dataArr[1] + dataArr[7] +" (Uid int(4) PRIMARY KEY AUTO_INCREMENT, isbn varchar(15) NOT NULL, dateBorrowed DATE , dateReturned DATE, fine FLOAT(7, 2))"
         connection.query(insertQuery, dataArr, function(errMy){
             if(errMy){
                 return reject(errMy);
             }
-            connection.query(newUserTableQuery, function (errN) { 
-                if (errN) { 
-                    return reject(errN);
-                }
-                resolve("Success");
-            });
+            resolve("Success");
         });
     });
 }
@@ -133,7 +127,6 @@ function updateCopies(isbnArr, connection) {
         for (let i in isbnArr) { 
             updateQuery += "isbn = " + isbnArr[i] + " OR "; 
         }
-        
         updateQuery = updateQuery.substring(0, updateQuery.length - 4) + ")";
         connection.query(updateQuery, [isbnArr], function (errU, result) { 
             if (errU) { 
@@ -145,10 +138,10 @@ function updateCopies(isbnArr, connection) {
 }
 
 //Function to get previously borrowed books of the logged in user
-function getPreviousBooks(name, unq, connection){ 
+function getPreviousBooks(id, connection){ 
     return new Promise(function (resolve, reject) { 
-        const prevBooksQuery = "SELECT * FROM librarymanagement." + name + unq;
-        connection.query(prevBooksQuery, function (errP, prevBooks) { 
+        const prevBooksQuery = "SELECT * FROM librarymanagement.booktransaction WHERE libid = ?";
+        connection.query(prevBooksQuery,[ id ], function (errP, prevBooks) { 
             if (errP) { 
                 return reject(errP);
             }
@@ -163,7 +156,7 @@ function getBookDetails(isbns, connection) {
         if (isbns.length == 0) { 
             resolve("NIL");
         }
-        var bookDataQuery = "SELECT name, author, year, genre, price, isbn FROM librarymanagement.books WHERE ";
+        var bookDataQuery = "SELECT isbn, name, author, year, genre, price, isbn FROM librarymanagement.books WHERE ";
         const isbnArr = isbns.toString().split(" ");
         for (let isbn in isbnArr) { 
             bookDataQuery += "isbn = " + isbnArr[isbn] + " OR ";
@@ -178,36 +171,36 @@ function getBookDetails(isbns, connection) {
     });
 }
 
-// Function to get all the student users
-function getStudUsers(connection) { 
-    return new Promise(function (resolve, reject) { 
-
-        const getAllUserQuery = "SELECT libid, firstName, uniqueNum FROM librarymanagement.libusers WHERE userType = 'Student'";
-        connection.query(getAllUserQuery, function (err, userData) {
-            if (err) {
-                return reject(err);
-            }
-            resolve(userData);
-        });
-
-    });
-}
-
 //Function to get all the pending books of all users
-function getPendingBooks(studData, connection) {
+function getPendingBooks(connection) {
     return new Promise(function (resolve, reject) { 
-        let pendingBooksQuery = "";
-        for (let i in studData) { 
-            pendingBooksQuery += "SELECT * FROM librarymanagement." + studData[i]['firstName'] + studData[i]['uniqueNum'] + " UNION ";
-        }
-        pendingBooksQuery = pendingBooksQuery.substring(0, pendingBooksQuery.length - 7);
+        let pendingBooksQuery = "SELECT * FROM librarymanagement.booktransaction WHERE dateReturned IS NULL";
         connection.query(pendingBooksQuery, function (err1, usersPendingBooks) {
             if (err1) {
                 return reject(err1);
             } 
-            console.log(studData);
-            console.log(usersPendingBooks);
             resolve(usersPendingBooks);  
+        });
+    });
+}
+
+//Function to get details about student users
+function getUserDetails(libids, connection) { 
+    return new Promise(function (resolve, reject) {
+        if (libids.length == 0) {
+            resolve("NIL");
+        }
+        var userDataQuery = "SELECT libid, firstName, uniqueNum FROM librarymanagement.libusers WHERE ";
+        const libidArr = libids.toString().split(" ");
+        for (let id in libidArr) {
+            userDataQuery += "libid = " + libidArr[id] + " OR ";
+        }
+        userDataQuery = userDataQuery.substring(0, userDataQuery.length - 4);
+        connection.query(userDataQuery, function (errPBD, userData) {
+            if (errPBD) {
+                return reject(errPBD);
+            }
+            resolve(userData);
         });
     });
 }
@@ -247,15 +240,18 @@ app.post("/login", validateLoginConfig, function(req, res){
                         bpErr['passErr'] = "Lib-Id or Password mismatch";
                         res.render('login', { lUserErr: bpErr['libErr'], lPassErr: bpErr['passErr'] });
                     }
-                    getPreviousBooks(rows[0]['firstName'], rows[0]['uniqueNum'], resc).then(function (prevBooksData) {
+                    if (rows[0]['userType'] == 'Student') { 
+
+                    }
+                    getPreviousBooks(rows[0]['libid'], resc).then(function (prevBooksData) {
                         var isbns = "";
                         for (let data in prevBooksData) { 
                             isbns += prevBooksData[data]['isbn'] + " ";
                         }
                         isbns = isbns.trim();
+                        var finBooksData = [];
                         getBookDetails(isbns, resc).then(function (pData) {
                             if (pData != "NIL") { 
-                                var finBooksData = [];
                                 for (let i in prevBooksData) {
                                     finBooksData[prevBooksData[i]['isbn']] = prevBooksData[i];
                                 }
@@ -270,9 +266,9 @@ app.post("/login", validateLoginConfig, function(req, res){
                                 }
                             }
                             defPrevBooksData = finBooksData;
-                            res.redirect('/dashboard');
+                            res.redirect('dashboard');
                         }).catch(errPD => console.log(errPD));
-            
+
                     }).catch(errPB => console.log(errPB));
                 }
              }).catch(err3 => console.log(err3));
@@ -282,25 +278,36 @@ app.post("/login", validateLoginConfig, function(req, res){
 
 // Validating and processing the signup form 
 app.post( "/signUp", validateSignUpConfig, function(req, res){
-    var sErr = {'fname': '', 'lname': '', 'email': '', 'pass': '', 'roll': '', 'uniqueNum': ''};
-    if(Object.keys(validationResult(req)['errors']).length == 0){
+    var sErr = { 'fname': '', 'lname': '', 'email': '', 'pass': '', 'roll': '', 'uniqueNum': '' };
+
+    if (Object.keys(validationResult(req)['errors']).length <= 1) {
         var userData = Object.values(req.body);
         const date = new Date();
-        const dobTemp = new Date(userData[userData.length-2]);
+        const dobTemp = new Date(userData[userData.length - 2]);
         const salt = bcrypt.genSaltSync(10);
         const hpass = bcrypt.hashSync(userData[4], salt);
         userData[4] = hpass;
-        userData[userData.length-1] = date.getFullYear() + "-" + (date.getMonth()+1) + "-" + date.getDate() + " " + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds(); 
-        userData[userData.length-2] = dobTemp.getFullYear() + "-" + (dobTemp.getMonth()+1) + "-" + dobTemp.getDate();
-    
+        userData[userData.length - 1] = date.getFullYear() + "-" + (date.getMonth() + 1) + "-" + date.getDate() + " " + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds();
+        userData[userData.length - 2] = dobTemp.getFullYear() + "-" + (dobTemp.getMonth() + 1) + "-" + dobTemp.getDate();
+
         sconnect().then(function (resS) {
             newLibId(resS).then(function (nLibId) {
                 userData.push(nLibId[0]['newlibid']);
                 signupInsert(userData, resS).then(function (_statusI) {
-                    res.redirect('/dashboard')
+                    if (validationResult(req)['errors'][0]['param'] == 'roll' && req.body.userType != 'Student') {
+                        console.log(typeof (req.body.userType));
+                        if (req.body.userType == 'Staff') {
+                            res.redirect('staff');
+                        } else {
+                            res.redirect('admin');
+                        }
+                    } else {
+                        res.redirect('/dashboard');
+                    }
+
                 }).catch(errI => console.log(errI));
             }).catch(errL => console.log(errL));
-        }).catch(errS => console.log(errS));
+        }).catch(errS => console.log(errS));       
     }else{
         const valErr = validationResult(req)['errors'];
         for(let errIter in valErr){
@@ -325,7 +332,8 @@ app.post( "/signUp", validateSignUpConfig, function(req, res){
                     break;
             }
         }
-        res.render('signUp', {lUserErr: bpErr['libErr'], lPassErr: bpErr['passErr'], fname: sErr['fname'], lname: sErr['lname'], email: sErr['email'], pass: sErr['pass'], roll: sErr['roll'], uniqueNum: sErr['uniqueNum']});
+        // console.log(sErr);
+        res.render('signUp', {fname: sErr['fname'], lname: sErr['lname'], email: sErr['email'], pass: sErr['pass'], roll: sErr['roll'], uniqueNum: sErr['uniqueNum']});
     }
 });
 
@@ -357,33 +365,49 @@ app.post("/confirmBooks", function (req, res) {
 //Sending the staff homepage on get request
 app.get("/staff", function (req, res) { 
     sconnect().then(function (resS) { 
-        getStudUsers(resS).then(function (userData) { 
-            getPendingBooks(userData, resS).then(function (eachPendingBooks) {
-                var newEachPendingBooks = [];
-                for (let i in eachPendingBooks) { 
-                    eachPendingBooks[i]['dateBorrowed'] = new Date(eachPendingBooks[i]['dateBorrowed']).toDateString();
-                    eachPendingBooks[i]['dateReturned'] = new Date(eachPendingBooks[i]['dateReturned']).toDateString();
-                    newEachPendingBooks[eachPendingBooks[i]['isbn']] = eachPendingBooks[i];
+        
+        getPendingBooks(resS).then(function (pendingBooks) {
+            var isbnArr = [];
+            var libidArr = [];
+            var finalPendingBooksData = {};
+            for (let i in pendingBooks) { 
+                pendingBooks[i]['dateBorrowed'] = new Date(pendingBooks[i]['dateBorrowed']).toDateString();
+                isbnArr.push(pendingBooks[i]['isbn']);
+                libidArr.push(pendingBooks[i]['libid']);
+                finalPendingBooksData[pendingBooks[i]['isbn']] = pendingBooks[i];
+            }
+
+            getBookDetails(isbnArr, resS).then(function (bookData) { 
+                for (let i in bookData) { 
+                    finalPendingBooksData[bookData[i]['isbn']]['name'] = bookData[i]['name'];
+                    finalPendingBooksData[bookData[i]['isbn']]['author'] = bookData[i]['author'];
+                    finalPendingBooksData[bookData[i]['isbn']]['year'] = bookData[i]['year'];
+                    finalPendingBooksData[bookData[i]['isbn']]['genre'] = bookData[i]['genre'];
+                    finalPendingBooksData[bookData[i]['isbn']]['price'] = bookData[i]['price'];
                 }
-                getBookDetails(Object.keys(newEachPendingBooks).toString().replaceAll(',', ' '), resS).then(function (bookData) { 
-                    for (let i in bookData) { 
-                        newEachPendingBooks[bookData[i]['isbn']]['name'] = bookData[i]['name'];
-                        newEachPendingBooks[bookData[i]['isbn']]['author'] = bookData[i]['author'];
-                        newEachPendingBooks[bookData[i]['isbn']]['year'] = bookData[i]['year'];
-                        newEachPendingBooks[bookData[i]['isbn']]['genre'] = bookData[i]['genre'];
-                        newEachPendingBooks[bookData[i]['isbn']]['price'] = bookData[i]['price'];
+                getUserDetails(libidArr, resS).then(function (userData) { 
+                    var finalUserData = {};
+                    for (let i in userData) { 
+                        finalUserData[userData[i]['libid']] = userData[i];
                     }
-                    console.log(newEachPendingBooks);
-                    res.render('staff', { pendingBooks: newEachPendingBooks });
 
-                }).catch(err4 => console.log(err4));
+                    for (let isbn in finalPendingBooksData) {
+                        finalPendingBooksData[isbn]['stuName'] = finalUserData[finalPendingBooksData[isbn]['libid']]['firstName'];
+                        finalPendingBooksData[isbn]['uniqueNum'] = finalUserData[finalPendingBooksData[isbn]['libid']]['uniqueNum'];
+                    }
+                    res.render('staff', { pendingBooks: finalPendingBooksData });
+                }).catch(errU => console.log(errU));
 
-            }).catch(err1 => console.log(err1));
-                
-        }).catch(err3 => console.log(err3));
+            }).catch(errB => console.log(errB));
 
+
+        }).catch(err1 => console.log(err1));
         
     }).catch(err => console.log(err));
+});
+
+app.get("/admin", function (req, res) { 
+    res.render('admin');
 });
 
 // Listening to port 3000

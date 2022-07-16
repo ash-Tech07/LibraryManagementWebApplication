@@ -43,12 +43,15 @@
 
 
     <!-- PENDING BOOKS TABLE -->
-    <div class="cont mt-3 ms-auto me-auto text-center" style="max-width: 85vw;">
 
+    <div class="cont mt-5 ms-auto me-auto text-center" style="max-width: 95vw;">
+        <h1 class="mb-3 ms-auto me-auto" style="max-width: 60vw;text-align: center;">Pending Books</h1>
         <table class="table table-striped table-hover">
             <thead>
                 <th>S. NO</th>
                 <th>Lib-Id</th>
+                <th>Student Name</th>
+                <th>Unique Number</th>
                 <th>Book Name</th>
                 <th>Author Name</th>
                 <th>Genre</th>
@@ -56,14 +59,17 @@
                 <th>ISBN</th>
                 <th>Price</th>
                 <th>Borrowed On</th>
+                <th>Lend</th>
             </thead>
             <tbody>
                 <% if (pendingBooks) { %>
-                    <%= i = 1 %>
+                    <% let i = 1; %>
                     <% for(let isbn in pendingBooks) { %>
                         <tr>
                             <td><%= i %></td>
                             <td><%= pendingBooks[isbn]['libid'] %></td>
+                            <td><%= pendingBooks[isbn]['stuName'] %></td>
+                            <td><%= pendingBooks[isbn]['uniqueNum'] %></td>
                             <td><%= pendingBooks[isbn]['name'] %></td>
                             <td><%= pendingBooks[isbn]['author'] %></td>
                             <td><%= pendingBooks[isbn]['genre'] %></td>
@@ -71,8 +77,9 @@
                             <td><%= isbn %></td>
                             <td><%= pendingBooks[isbn]['price'] %></td>
                             <td><%= pendingBooks[isbn]['dateBorrowed'] %></td>
+                            <td><button class="btn btn-outline-dark btn-sm">Give</button></td>
                         </tr>
-                    <% } } %>
+                    <% i++; } } %>
             </tbody>
 
         </table>

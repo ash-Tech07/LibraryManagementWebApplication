@@ -143,11 +143,13 @@
         </thead>
 
         <% if (prevBooksData) { %>
+            <% let i = 1; %>
             <% for (let data in prevBooksData){ %>
+                
                 <tbody>
                     <tr>
                         <td>
-                            <%= Number(data) + 1 %>
+                            <%= i %>
                         </td>
                         <td>
                             <%= prevBooksData[data]['name'] %>
@@ -178,7 +180,7 @@
                         </td>
                     </tr>
                 </tbody>
-            <% } } %>
+            <% i++; } } %>
         
     </table>
         
