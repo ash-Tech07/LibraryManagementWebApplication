@@ -6,6 +6,7 @@ const bcrypt = require("bcryptjs");
 const ejs = require("ejs");
 const { body, validationResult } = require("express-validator");
 const e = require("express");
+const { DATE } = require("sequelize");
 const db_config = {
     host: 'localhost',
     user: 'root',
@@ -181,7 +182,7 @@ function getBookDetails(isbns, connection) {
 function getStudUsers(connection) { 
     return new Promise(function (resolve, reject) { 
 
-        const getAllUserQuery = "SELECT firstName, uniqueNum FROM librarymanagement.libusers WHERE userType = 'Student'";
+        const getAllUserQuery = "SELECT libid, firstName, uniqueNum FROM librarymanagement.libusers WHERE userType = 'Student'";
         connection.query(getAllUserQuery, function (err, userData) {
             if (err) {
                 return reject(err);
@@ -204,6 +205,8 @@ function getPendingBooks(studData, connection) {
             if (err1) {
                 return reject(err1);
             } 
+            console.log(studData);
+            console.log(usersPendingBooks);
             resolve(usersPendingBooks);  
         });
     });
@@ -353,15 +356,28 @@ app.post("/confirmBooks", function (req, res) {
 
 //Sending the staff homepage on get request
 app.get("/staff", function (req, res) { 
-    var pendingBooks = [];
     sconnect().then(function (resS) { 
         getStudUsers(resS).then(function (userData) { 
-            console.log(userData);
             getPendingBooks(userData, resS).then(function (eachPendingBooks) {
-                pendingBooks[0] = eachPendingBooks;
-                //console.log("PEND: " + eachPendingBooks);
-                res.render('staff', { pendingBooks: pendingBooks });
-                // res.send(pendingBooks);
+                var newEachPendingBooks = [];
+                for (let i in eachPendingBooks) { 
+                    eachPendingBooks[i]['dateBorrowed'] = new Date(eachPendingBooks[i]['dateBorrowed']).toDateString();
+                    eachPendingBooks[i]['dateReturned'] = new Date(eachPendingBooks[i]['dateReturned']).toDateString();
+                    newEachPendingBooks[eachPendingBooks[i]['isbn']] = eachPendingBooks[i];
+                }
+                getBookDetails(Object.keys(newEachPendingBooks).toString().replaceAll(',', ' '), resS).then(function (bookData) { 
+                    for (let i in bookData) { 
+                        newEachPendingBooks[bookData[i]['isbn']]['name'] = bookData[i]['name'];
+                        newEachPendingBooks[bookData[i]['isbn']]['author'] = bookData[i]['author'];
+                        newEachPendingBooks[bookData[i]['isbn']]['year'] = bookData[i]['year'];
+                        newEachPendingBooks[bookData[i]['isbn']]['genre'] = bookData[i]['genre'];
+                        newEachPendingBooks[bookData[i]['isbn']]['price'] = bookData[i]['price'];
+                    }
+                    console.log(newEachPendingBooks);
+                    res.render('staff', { pendingBooks: newEachPendingBooks });
+
+                }).catch(err4 => console.log(err4));
+
             }).catch(err1 => console.log(err1));
                 
         }).catch(err3 => console.log(err3));

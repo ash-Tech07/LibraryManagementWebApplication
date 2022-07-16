@@ -49,23 +49,28 @@
             <thead>
                 <th>S. NO</th>
                 <th>Lib-Id</th>
-                <th>Student Name</th>
                 <th>Book Name</th>
                 <th>Author Name</th>
                 <th>Genre</th>
                 <th>Year</th>
+                <th>ISBN</th>
                 <th>Price</th>
                 <th>Borrowed On</th>
             </thead>
             <tbody>
-                <% if (pendingBooks[0]) { %>
-                    <% for(let book in pendingBooks[0]) { %>
+                <% if (pendingBooks) { %>
+                    <%= i = 1 %>
+                    <% for(let isbn in pendingBooks) { %>
                         <tr>
-                            <td><%= Number(book) + 1 %></td>
-                            <td><%= pendingBooks[0][book]['isbn'] %></td>
-                            <td><%= pendingBooks[0][book]['dateBorrowed'] %></td>
-                            <td><%= pendingBooks[0][book]['dateReturned'] %></td>
-                            <td><%= pendingBooks[0][book]['fine'] %></td>
+                            <td><%= i %></td>
+                            <td><%= pendingBooks[isbn]['libid'] %></td>
+                            <td><%= pendingBooks[isbn]['name'] %></td>
+                            <td><%= pendingBooks[isbn]['author'] %></td>
+                            <td><%= pendingBooks[isbn]['genre'] %></td>
+                            <td><%= pendingBooks[isbn]['year'] %></td>
+                            <td><%= isbn %></td>
+                            <td><%= pendingBooks[isbn]['price'] %></td>
+                            <td><%= pendingBooks[isbn]['dateBorrowed'] %></td>
                         </tr>
                     <% } } %>
             </tbody>
