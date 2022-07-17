@@ -31,7 +31,6 @@
             <!-- NAVBAR LINKS -->
             <div class="collapse navbar-collapse justify-content-end me-auto" id="navbarText">
                 <ul class="navbar-nav me-5">
-                <li class="nav-item"> <a class="nav-link active" aria-current="page" href="/login">HOME</a></li>
                 <li class="nav-item"> <a class="nav-link" href="">LOG OUT</a></li>
                 </ul>
             </div>
@@ -53,7 +52,6 @@
                 <input type="text" name="searchFactor" id="disabledSearchFactor" value="<%= searchConfig[0]['searchTag'] %>" style="display: none;">
                 <input type="text" class="form-control" name="searchBar" placeholder="Example: 12 Rules to Learn to Code...." value="<%= searchConfig[0]['searchBarText'] %>">
                 <button class="btn btn-outline-secondary" type="submit">  Go  </button>
-           
             </div>
          </form>
 
@@ -186,7 +184,35 @@
         
 
 
+    <!-- CURRENTLY BORROWED BOOKS -->
+    <h1 class="mt-5 ms-auto me-auto" style="max-width: 60vw;text-align: center;">Currently Borrowed Books</h1>
+    <table class="table table-striped table-hover mt-5 ms-auto me-auto" style="max-width: 90vw; text-align: center;">
+        <thead>
+            <th>S. NO</th>
+            <th>Book Name</th>
+            <th>Author</th>
+            <th>Year</th>
+            <th>Genre</th>
+            <th>Price</th>
+            <th>ISBN</th>
+        </thead>
+        <tbody>
+            <% if (currBooksData) { %>
+                <% let i = 1; %>
+                <% for(let isbn in currBooksData) { %>
+                    <tr>
+                        <td><%= i %></td>
+                        <td><%= currBooksData[isbn]['name'] %></td>
+                        <td><%= currBooksData[isbn]['author'] %></td>
+                        <td><%= currBooksData[isbn]['year'] %></td>
+                        <td><%= currBooksData[isbn]['genre'] %></td>
+                        <td><%= currBooksData[isbn]['price'] %></td>
+                        <td><%= isbn %></td>
+                    </tr>
+            <% i++; } } %>
 
+        </tbody>
+    </table>
 
 
 

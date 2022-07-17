@@ -3,10 +3,7 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const mysql = require("mysql");
 const bcrypt = require("bcryptjs");
-const ejs = require("ejs");
 const { body, validationResult } = require("express-validator");
-const e = require("express");
-const { DATE, and } = require("sequelize");
 const db_config = {
     host: 'localhost',
     user: 'root',
@@ -21,11 +18,13 @@ const validateSignUpConfig = [  body('fname').trim().escape().isLength({min:3}).
                                 body('roll').trim().escape().isLength({min:10, max:10}).withMessage("Enter a valid roll no."),
                                 body('uniqueNum').trim().escape().isNumeric().withMessage('Enter a valid unique number').isLength({min: 14, max: 14}).withMessage('Enter a valid unique number') 
                             ];
-const validateSearchConfig = [body('searchBar').trim().escape().toLowerCase()];   
+const validateSearchConfig = [body('searchBar').trim().escape().toLowerCase()];
+
+//Default values for all configuration
 const defSearch = [{ 'name': '12 Rule to Learn to Code', 'author': 'Angele Yu', 'year': '2020', 'genre': 'education', 'price': '378.12', 'isbn': '9798671342703', 'noOfCopies': 1 }];
 const defSearchConfig = [{ 'searchTag': 'Search By:', 'searchBarText': '' }];
-var defPrevBooksData = {};                     
-
+var defPrevBooksData = {};
+var defCurrBorrowedBooks = {};                     
 
 // Setting the express environment
 const app = express();
@@ -140,7 +139,7 @@ function updateCopies(isbnArr, connection) {
 //Function to get previously borrowed books of the logged in user
 function getPreviousBooks(id, connection){ 
     return new Promise(function (resolve, reject) { 
-        const prevBooksQuery = "SELECT * FROM librarymanagement.booktransaction WHERE libid = ?";
+        const prevBooksQuery = "SELECT * FROM librarymanagement.booktransaction WHERE libid = ? AND dateReturned IS NOT NULL";
         connection.query(prevBooksQuery,[ id ], function (errP, prevBooks) { 
             if (errP) { 
                 return reject(errP);
@@ -205,6 +204,19 @@ function getUserDetails(libids, connection) {
     });
 }
 
+//Function the get the currently borrowed books of the user
+function getCurrBooksData(libid, connection) { 
+    return new Promise(function (resolve, reject) { 
+        const currBookDataQuery = "SELECT * FROM librarymanagement.booktransaction WHERE libid = ? AND dateReturned IS NULL";
+        connection.query(currBookDataQuery, [libid], function (err, bookData) { 
+            if (err) { 
+                return reject(err);
+            }
+            resolve(bookData);
+        });
+    });
+}
+
 
 // Sending the loginpage on get request  
 app.get("/login", function(_req, res){
@@ -218,7 +230,7 @@ app.get("/signUp", function (_req, res) {
 
 //Sending the dashboard page on get requset
 app.get("/dashboard", function (_req, res) {
-    res.render('dashboard', { searchConfig: defSearchConfig, searchData: defSearch, prevBooksData: defPrevBooksData});
+    res.render('dashboard', { searchConfig: defSearchConfig, searchData: defSearch, prevBooksData: defPrevBooksData, currBooksData: defCurrBorrowedBooks});
 });
 
 // Validating and processing the login form
@@ -240,36 +252,61 @@ app.post("/login", validateLoginConfig, function(req, res){
                         bpErr['passErr'] = "Lib-Id or Password mismatch";
                         res.render('login', { lUserErr: bpErr['libErr'], lPassErr: bpErr['passErr'] });
                     }
-                    if (rows[0]['userType'] == 'Student') { 
-
-                    }
-                    getPreviousBooks(rows[0]['libid'], resc).then(function (prevBooksData) {
-                        var isbns = "";
-                        for (let data in prevBooksData) { 
-                            isbns += prevBooksData[data]['isbn'] + " ";
-                        }
-                        isbns = isbns.trim();
-                        var finBooksData = [];
-                        getBookDetails(isbns, resc).then(function (pData) {
-                            if (pData != "NIL") { 
-                                for (let i in prevBooksData) {
-                                    finBooksData[prevBooksData[i]['isbn']] = prevBooksData[i];
+                    if (rows[0]['userType'] == 'Student') {
+                        getPreviousBooks(rows[0]['libid'], resc).then(function (prevBooksData) {
+                            getCurrBooksData(rows[0]['libid'], resc).then(function (currBooksData) {
+                                var isbns = "";
+                                for (let data in prevBooksData) {
+                                    isbns += prevBooksData[data]['isbn'] + " ";
                                 }
-                                for (let i in pData) {
-                                    finBooksData[pData[i]['isbn']]['name'] = pData[i]['name'];
-                                    finBooksData[pData[i]['isbn']]['author'] = pData[i]['author'];
-                                    finBooksData[pData[i]['isbn']]['year'] = pData[i]['year'];
-                                    finBooksData[pData[i]['isbn']]['genre'] = pData[i]['genre'];
-                                    finBooksData[pData[i]['isbn']]['price'] = pData[i]['price'];
-                                    finBooksData[pData[i]['isbn']]['dateBorrowed'] = (new Date(finBooksData[pData[i]['isbn']]['dateBorrowed'])).toDateString();
-                                    finBooksData[pData[i]['isbn']]['dateReturned'] = (new Date(finBooksData[pData[i]['isbn']]['dateReturned'])).toDateString();
+                                for (let i in currBooksData) { 
+                                    isbns += currBooksData[i]['isbn'];
                                 }
-                            }
-                            defPrevBooksData = finBooksData;
-                            res.redirect('dashboard');
-                        }).catch(errPD => console.log(errPD));
-
-                    }).catch(errPB => console.log(errPB));
+                                isbns = isbns.trim();
+                                var finBooksData = [];
+                                var finCurrBooksData = [];
+                                getBookDetails(isbns, resc).then(function (pData) {
+                                    if (pData != "NIL") {
+                                        let tempData = {};
+                                        for (let i in pData) {
+                                            tempData[pData[i]['isbn']] = pData[i];
+                                        }
+                                        if (Object.keys(prevBooksData).length != 0) { 
+                                            for (let i in prevBooksData) {
+                                                finBooksData[prevBooksData[i]['isbn']] = prevBooksData[i];
+                                            }
+                                            for (let i in pData) {
+                                                finBooksData[pData[i]['isbn']]['name'] = pData[i]['name'];
+                                                finBooksData[pData[i]['isbn']]['author'] = pData[i]['author'];
+                                                finBooksData[pData[i]['isbn']]['year'] = pData[i]['year'];
+                                                finBooksData[pData[i]['isbn']]['genre'] = pData[i]['genre'];
+                                                finBooksData[pData[i]['isbn']]['price'] = pData[i]['price'];
+                                                finBooksData[pData[i]['isbn']]['dateBorrowed'] = (new Date(finBooksData[pData[i]['isbn']]['dateBorrowed'])).toDateString();
+                                                finBooksData[pData[i]['isbn']]['dateReturned'] = (new Date(finBooksData[pData[i]['isbn']]['dateReturned'])).toDateString();
+                                            }
+                                        }
+                                        if (Object.keys(currBooksData).length != 0) { 
+                                            for (let i in currBooksData) { 
+                                                finCurrBooksData[currBooksData[i]['isbn']] = currBooksData[i];
+                                                finCurrBooksData[currBooksData[i]['isbn']]['name'] = tempData[currBooksData[i]['isbn']]['name'];
+                                                finCurrBooksData[currBooksData[i]['isbn']]['author'] = tempData[currBooksData[i]['isbn']]['author'];
+                                                finCurrBooksData[currBooksData[i]['isbn']]['year'] = tempData[currBooksData[i]['isbn']]['year'];
+                                                finCurrBooksData[currBooksData[i]['isbn']]['genre'] = tempData[currBooksData[i]['isbn']]['genre'];
+                                                finCurrBooksData[currBooksData[i]['isbn']]['price'] = tempData[currBooksData[i]['isbn']]['price'];
+                                            }
+                                        }  
+                                    }
+                                    defPrevBooksData = finBooksData;
+                                    defCurrBorrowedBooks = finCurrBooksData;
+                                    res.redirect('dashboard');
+                                }).catch(errC => console.log(errC)); 
+                            }).catch(errPD => console.log(errPD));
+                        }).catch(errPB => console.log(errPB));
+                    } else if (rows[0]['userType'] == 'Staff') {
+                        res.redirect('/staff');
+                    } else { 
+                        res.redirect('/admin');
+                    }    
                 }
              }).catch(err3 => console.log(err3));
         }).catch(_errc1 => console.log("Could not establish a connection"));
@@ -279,7 +316,6 @@ app.post("/login", validateLoginConfig, function(req, res){
 // Validating and processing the signup form 
 app.post( "/signUp", validateSignUpConfig, function(req, res){
     var sErr = { 'fname': '', 'lname': '', 'email': '', 'pass': '', 'roll': '', 'uniqueNum': '' };
-
     if (Object.keys(validationResult(req)['errors']).length <= 1) {
         var userData = Object.values(req.body);
         const date = new Date();
@@ -332,7 +368,6 @@ app.post( "/signUp", validateSignUpConfig, function(req, res){
                     break;
             }
         }
-        // console.log(sErr);
         res.render('signUp', {fname: sErr['fname'], lname: sErr['lname'], email: sErr['email'], pass: sErr['pass'], roll: sErr['roll'], uniqueNum: sErr['uniqueNum']});
     }
 });
@@ -343,7 +378,7 @@ app.post("/dashboard", validateSearchConfig, function (req, res){
     sconnect().then(function (resQ) {
         searchDB(req.body.searchBar, req.body.searchFactor, resQ).then(function (searchResults) {
             const searchConfig = [{ 'searchTag': req.body.searchFactor, 'searchBarText': req.body.searchBar, 'noOfSearchResults': Object.keys(searchResults).length}];
-            res.render('dashboard', { searchData: searchResults, searchConfig: searchConfig, prevBooksData: defPrevBooksData });
+            res.render('dashboard', { searchData: searchResults, searchConfig: searchConfig, prevBooksData: defPrevBooksData, currBooksData: defCurrBorrowedBooks });
         }).catch(errDB => console.log(errDB));
     }).catch(errCBD => console.log(errCBD));
     
@@ -365,7 +400,6 @@ app.post("/confirmBooks", function (req, res) {
 //Sending the staff homepage on get request
 app.get("/staff", function (req, res) { 
     sconnect().then(function (resS) { 
-        
         getPendingBooks(resS).then(function (pendingBooks) {
             var isbnArr = [];
             var libidArr = [];
@@ -376,7 +410,6 @@ app.get("/staff", function (req, res) {
                 libidArr.push(pendingBooks[i]['libid']);
                 finalPendingBooksData[pendingBooks[i]['isbn']] = pendingBooks[i];
             }
-
             getBookDetails(isbnArr, resS).then(function (bookData) { 
                 for (let i in bookData) { 
                     finalPendingBooksData[bookData[i]['isbn']]['name'] = bookData[i]['name'];
@@ -390,19 +423,14 @@ app.get("/staff", function (req, res) {
                     for (let i in userData) { 
                         finalUserData[userData[i]['libid']] = userData[i];
                     }
-
                     for (let isbn in finalPendingBooksData) {
                         finalPendingBooksData[isbn]['stuName'] = finalUserData[finalPendingBooksData[isbn]['libid']]['firstName'];
                         finalPendingBooksData[isbn]['uniqueNum'] = finalUserData[finalPendingBooksData[isbn]['libid']]['uniqueNum'];
                     }
                     res.render('staff', { pendingBooks: finalPendingBooksData });
                 }).catch(errU => console.log(errU));
-
             }).catch(errB => console.log(errB));
-
-
         }).catch(err1 => console.log(err1));
-        
     }).catch(err => console.log(err));
 });
 
