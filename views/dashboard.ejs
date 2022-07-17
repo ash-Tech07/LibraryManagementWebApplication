@@ -191,10 +191,12 @@
             <th>S. NO</th>
             <th>Book Name</th>
             <th>Author</th>
+            <th>ISBN</th>
             <th>Year</th>
             <th>Genre</th>
+            <th>Date Borrowed</th>
             <th>Price</th>
-            <th>ISBN</th>
+            
         </thead>
         <tbody>
             <% if (currBooksData) { %>
@@ -204,10 +206,12 @@
                         <td><%= i %></td>
                         <td><%= currBooksData[isbn]['name'] %></td>
                         <td><%= currBooksData[isbn]['author'] %></td>
+                        <td><%= isbn %></td>
                         <td><%= currBooksData[isbn]['year'] %></td>
                         <td><%= currBooksData[isbn]['genre'] %></td>
+                        <td><%= currBooksData[isbn]['dateBorrowed'] %></td>
                         <td><%= currBooksData[isbn]['price'] %></td>
-                        <td><%= isbn %></td>
+                        
                     </tr>
             <% i++; } } %>
 
