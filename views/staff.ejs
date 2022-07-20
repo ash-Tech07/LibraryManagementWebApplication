@@ -35,7 +35,7 @@
             <!-- NAVBAR LINKS -->
             <div class="collapse navbar-collapse justify-content-end me-auto" id="navbarText">
                 <ul class="navbar-nav me-5">
-                    <li class="nav-item"> <a class="nav-link" href="">LOG OUT</a></li>
+                    <li class="nav-item"> <a class="nav-link" href="/logout">LOG OUT</a></li>
                 </ul>
             </div>
         </div>
@@ -77,7 +77,7 @@
                             <td><%= isbn %></td>
                             <td><%= pendingBooks[isbn]['price'] %></td>
                             <td><%= pendingBooks[isbn]['dateBorrowed'] %></td>
-                            <td><button class="btn btn-outline-dark btn-sm">Give</button></td>
+                            <td><button class="btn btn-outline-dark btn-sm">Return</button></td>
                         </tr>
                     <% i++; } } %>
             </tbody>

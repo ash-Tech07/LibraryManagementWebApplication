@@ -190,7 +190,7 @@ function getPendingBooks(connection) {
                 libidArr.push(pendingBooks[i]['libid']);
                 finalPendingBooksData[pendingBooks[i]['isbn']] = pendingBooks[i];
             }
-            getBookDetails(isbnArr, connection).then(function (bookData) {
+            getBookDetails(isbnArr.join(" "), connection).then(function (bookData) {
                 for (let i in bookData) {
                     finalPendingBooksData[bookData[i]['isbn']]['name'] = bookData[i]['name'];
                     finalPendingBooksData[bookData[i]['isbn']]['author'] = bookData[i]['author'];
@@ -198,7 +198,7 @@ function getPendingBooks(connection) {
                     finalPendingBooksData[bookData[i]['isbn']]['genre'] = bookData[i]['genre'];
                     finalPendingBooksData[bookData[i]['isbn']]['price'] = bookData[i]['price'];
                 }
-                getUserDetails(libidArr, connection).then(function (userData) {
+                getUserDetails(libidArr.join(" "), connection).then(function (userData) {
                     var finalUserData = {};
                     for (let i in userData) {
                         finalUserData[userData[i]['libid']] = userData[i];
@@ -331,32 +331,36 @@ function updateTransaction(libid, isbn, connection) {
 
 // Sending the loginpage on get request  
 app.get("/login", function (req, res) { 
-    if (req.cookies['Library User Data']) {
-        getPrevBooksData(req.cookies['Library User Data']).then(function (prevBookData) { 
+    if (req.cookies['Student']) {
+        getPrevBooksData(req.cookies['Student']).then(function (prevBookData) { 
             defPrevBooksData = prevBookData;
-            getCurrentBooksData(req.cookies['Library User Data']).then(function (currBookData) { 
+            getCurrentBooksData(req.cookies['Student']).then(function (currBookData) { 
                 defCurrBorrowedBooks = currBookData;
                 res.redirect('dashboard');
             }).catch(err2 => console.log(err2));
             
         }).catch(err => console.log(err));
-    } else {
+    } else if (req.cookies['Staff']) {
+        res.redirect('staff');
+    }else {
         res.render('login', { lUserErr: '', lPassErr: '' });
     }
 });
 
 // Sending the signup page on get request  
 app.get("/signUp", function (req, res) {
-    if (req.cookies['Library User Data']) {
-        getPrevBooksData(req.cookies['Library User Data']).then(function (prevBookData) {
+    if (req.cookies['Student']) {
+        getPrevBooksData(req.cookies['Student']).then(function (prevBookData) {
             defPrevBooksData = prevBookData;
-            getCurrentBooksData(req.cookies['Library User Data']).then(function (currBookData) {
+            getCurrentBooksData(req.cookies['Student']).then(function (currBookData) {
                 defCurrBorrowedBooks = currBookData;
                 res.redirect('dashboard');
             }).catch(err2 => console.log(err2));
 
         }).catch(err => console.log(err));
-    } else {
+    } else if (req.cookies['Staff']) { 
+        res.redirect('staff');
+    }else {
         res.render('signUp', { fname: '', lname: '', email: '', pass: '', roll: '', uniqueNum: '' });
     }
     
@@ -365,10 +369,10 @@ app.get("/signUp", function (req, res) {
 //Sending the dashboard page on get requset
 app.get("/dashboard", function (req, res) {
     
-    if (req.cookies['Library User Data']) {
-        getPrevBooksData(req.cookies['Library User Data']).then(function (prevBookData) {
+    if (req.cookies['Student']) {
+        getPrevBooksData(req.cookies['Student']).then(function (prevBookData) {
             defPrevBooksData = (prevBookData != "NIL") ? prevBookData : {};
-            getCurrentBooksData(req.cookies['Library User Data']).then(function (currBookData) {
+            getCurrentBooksData(req.cookies['Student']).then(function (currBookData) {
                 defCurrBorrowedBooks = (currBookData != "NIL") ? currBookData : {};
                 res.render('dashboard', { searchData: defSearch, searchConfig: defSearchConfig, prevBooksData: defPrevBooksData, currBooksData: defCurrBorrowedBooks });
             }).catch(err2 => console.log(err2));
@@ -398,7 +402,7 @@ app.post("/login", validateLoginConfig, function(req, res){
                         bpErr['passErr'] = "Lib-Id or Password mismatch";
                         res.render('login', { lUserErr: bpErr['libErr'], lPassErr: bpErr['passErr'] });
                     } else {
-                        res.cookie('Library User Data', rows[0]['libid'].toString());
+                        res.cookie(rows[0]['userType'], rows[0]['libid'].toString());
                         if (rows[0]['userType'] == 'Student') {
                             getPrevBooksData(rows[0]['libid']).then(function (prevBookData) {
                             
@@ -495,7 +499,7 @@ app.post("/confirmBooks", function (req, res) {
     sconnect().then(function (resS) {
         updateCopies(booksArray, resS).then(function (stat) {
             getBookDetails(req.body['booksSelected'], resS).then(function (bookData) {
-                updateTransaction(req.cookies['Library User Data'], req.body['booksSelected'], resS).then(function (ans) { 
+                updateTransaction(req.cookies['Student'], req.body['booksSelected'], resS).then(function (ans) { 
                     res.render('confirmBooks', { borrowedBookData: bookData });
                 }).catch(err4 => console.log(err4));
             }).catch(errT => console.log(errT));
@@ -506,7 +510,7 @@ app.post("/confirmBooks", function (req, res) {
 
 //Sending the staff homepage on get request
 app.get("/staff", function (req, res) { 
-    if (req.cookies['Library User Data']) {
+    if (req.cookies['Staff']) {
         sconnect().then(function (resS) {
             getPendingBooks(resS).then(function (pendingBooksData) {
                 defPendingBooks = pendingBooksData;
@@ -526,7 +530,14 @@ app.get("/admin", function (req, res) {
 
 //Logging out the user
 app.get("/logout", function (req, res) {
-    res.clearCookie('Library User Data');
+    if (req.cookies['Student']) {
+        res.clearCookie('Student');
+    } else if (req.cookies['Staff']) {
+        console.log("sdfsd");
+        res.clearCookie('Staff');
+    } else { 
+        res.clearCookie('Admin');
+    }
     res.redirect('login');
 });
 
