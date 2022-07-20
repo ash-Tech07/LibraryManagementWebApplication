@@ -297,7 +297,6 @@ function getCurrentBooksData(libid) {
                         for (let i in currData) {
                             finalCurrentBooksData[currData[i]['isbn']]['dateBorrowed'] = (new Date(currData[i]['dateBorrowed'])).toDateString();
                         }
-                        console.log(finalCurrentBooksData);
                         resolve(finalCurrentBooksData);
                     }).catch(err => { return reject(err); });
                 } else { 
@@ -307,6 +306,26 @@ function getCurrentBooksData(libid) {
             }).catch(err1 => { return reject(err1); });
         }).catch(err => { return reject(err); });
     });
+}
+
+//Function to add book transaction
+function updateTransaction(libid, isbn, connection) {
+    return new Promise(function (resolve, reject) { 
+        const isbns = isbn.split(" ");
+        const date = new Date();
+        const dateFormatted = date.getFullYear() + "-" + (date.getMonth() + 1) + "-" + date.getDate();
+        var updateTransactionQuery = "INSERT INTO librarymanagement.booktransaction (libid, isbn, dateBorrowed) VALUES ";
+        for (let i in isbns) { 
+            updateTransactionQuery += "( " + libid + ", " + isbns[i] + ", '" + dateFormatted + "' )," ;
+        }
+        updateTransactionQuery = updateTransactionQuery.substring(0, updateTransactionQuery.length - 1);
+        connection.query(updateTransactionQuery, function (err) { 
+            if (err) { 
+                return reject(err);
+            }
+            resolve("Success");
+        });
+    });  
 }
 
 
@@ -351,7 +370,6 @@ app.get("/dashboard", function (req, res) {
             defPrevBooksData = (prevBookData != "NIL") ? prevBookData : {};
             getCurrentBooksData(req.cookies['Library User Data']).then(function (currBookData) {
                 defCurrBorrowedBooks = (currBookData != "NIL") ? currBookData : {};
-                console.log(defCurrBorrowedBooks);
                 res.render('dashboard', { searchData: defSearch, searchConfig: defSearchConfig, prevBooksData: defPrevBooksData, currBooksData: defCurrBorrowedBooks });
             }).catch(err2 => console.log(err2));
         }).catch(err => console.log(err));
@@ -421,7 +439,6 @@ app.post( "/signUp", validateSignUpConfig, function(req, res){
                 userData.push(nLibId[0]['newlibid']);
                 signupInsert(userData, resS).then(function (_statusI) {
                     if (validationResult(req)['errors'][0]['param'] == 'roll' && req.body.userType != 'Student') {
-                        console.log(typeof (req.body.userType));
                         if (req.body.userType == 'Staff') {
                             res.redirect('staff');
                         } else {
@@ -478,7 +495,9 @@ app.post("/confirmBooks", function (req, res) {
     sconnect().then(function (resS) {
         updateCopies(booksArray, resS).then(function (stat) {
             getBookDetails(req.body['booksSelected'], resS).then(function (bookData) {
-                res.render('confirmBooks', { borrowedBookData: bookData });
+                updateTransaction(req.cookies['Library User Data'], req.body['booksSelected'], resS).then(function (ans) { 
+                    res.render('confirmBooks', { borrowedBookData: bookData });
+                }).catch(err4 => console.log(err4));
             }).catch(errT => console.log(errT));
         }).catch(err => console.log(err));
 }).catch(errC => console.log(errC));
