@@ -26,7 +26,8 @@ const defSearch = [{ 'name': '12 Rule to Learn to Code', 'author': 'Angele Yu', 
 const defSearchConfig = [{ 'searchTag': 'Search By:', 'searchBarText': '' }];
 var defPrevBooksData = {};
 var defCurrBorrowedBooks = {};  
-var defPendingBooks = {};                   
+var defPendingBooks = {};   
+var defYetBorrowedBooks = {};                 
 
 // Setting the express environment
 const app = express();
@@ -174,9 +175,9 @@ function getBookDetails(isbns, connection) {
 }
 
 //Function to get all the pending books of all users
-function getPendingBooks(connection) {
+function getPendingBooks(status, connection) {
     return new Promise(function (resolve, reject) { 
-        let pendingBooksQuery = "SELECT * FROM librarymanagement.booktransaction WHERE dateReturned IS NULL";
+        let pendingBooksQuery = "SELECT * FROM librarymanagement.booktransaction WHERE dateReturned IS NULL AND status = " + status;
         connection.query(pendingBooksQuery, function (err1, pendingBooks) {
             if (err1) {
                 return reject(err1);
@@ -190,6 +191,8 @@ function getPendingBooks(connection) {
                 libidArr.push(pendingBooks[i]['libid']);
                 finalPendingBooksData[pendingBooks[i]['isbn']] = pendingBooks[i];
             }
+            console.log(finalPendingBooksData);
+
             getBookDetails(isbnArr.join(" "), connection).then(function (bookData) {
                 for (let i in bookData) {
                     finalPendingBooksData[bookData[i]['isbn']]['name'] = bookData[i]['name'];
@@ -198,6 +201,7 @@ function getPendingBooks(connection) {
                     finalPendingBooksData[bookData[i]['isbn']]['genre'] = bookData[i]['genre'];
                     finalPendingBooksData[bookData[i]['isbn']]['price'] = bookData[i]['price'];
                 }
+
                 getUserDetails(libidArr.join(" "), connection).then(function (userData) {
                     var finalUserData = {};
                     for (let i in userData) {
@@ -207,6 +211,7 @@ function getPendingBooks(connection) {
                         finalPendingBooksData[isbn]['stuName'] = finalUserData[finalPendingBooksData[isbn]['libid']]['firstName'];
                         finalPendingBooksData[isbn]['uniqueNum'] = finalUserData[finalPendingBooksData[isbn]['libid']]['uniqueNum'];
                     }
+
                     resolve(finalPendingBooksData);
                 }).catch(errU => console.log(errU));
             }).catch(errB => console.log(errB));  
@@ -512,9 +517,14 @@ app.post("/confirmBooks", function (req, res) {
 app.get("/staff", function (req, res) { 
     if (req.cookies['Staff']) {
         sconnect().then(function (resS) {
-            getPendingBooks(resS).then(function (pendingBooksData) {
+            getPendingBooks(1, resS).then(function (pendingBooksData) {
                 defPendingBooks = pendingBooksData;
-                res.render('staff', { pendingBooks: defPendingBooks });
+                getPendingBooks(0, resS).then(function (yBBooksData) { 
+                    defYetBorrowedBooks = yBBooksData;
+                    res.render('staff', { pendingBooks: defPendingBooks, yetBorrowedBooks: defYetBorrowedBooks });
+                }).catch(err5 => console.log(err5));
+                
+                
             }).catch(err1 => console.log(err1));
         }).catch(err => console.log(err));
     } else { 
