@@ -124,19 +124,27 @@ function searchDB(searchValue, searchFactor, connection) {
  }
 
 //Function to update the no of copies of borrowed books
-function updateCopies(isbnArr, connection) {
-    return new Promise(function (resolve, reject) { 
-        var updateQuery = "UPDATE librarymanagement.books SET noOfCopies = noOfCopies - 1 WHERE noOfCopies > 0 AND ( ";
-        for (let i in isbnArr) { 
-            updateQuery += "isbn = " + isbnArr[i] + " OR "; 
-        }
-        updateQuery = updateQuery.substring(0, updateQuery.length - 4) + ")";
-        connection.query(updateQuery, [isbnArr], function (errU, result) { 
-            if (errU) { 
-                return reject(errU);
+function updateCopies(isbnArr, inc) {
+    return new Promise(function (resolve, reject) {
+        sconnect().then(function (connection) { 
+            var updateQuery = "";
+            if (inc == 1) {
+                updateQuery = "UPDATE librarymanagement.books SET noOfCopies = noOfCopies + 1 WHERE (";
+            } else {
+                updateQuery = "UPDATE librarymanagement.books SET noOfCopies = noOfCopies - 1 WHERE noOfCopies > 0 AND ( ";
             }
-            resolve("Success");
-        });
+            for (let i in isbnArr) {
+                updateQuery += "isbn = " + isbnArr[i] + " OR ";
+            }
+            updateQuery = updateQuery.substring(0, updateQuery.length - 4) + ")";
+            connection.query(updateQuery, [isbnArr], function (errU, result) {
+                if (errU) {
+                    return reject(errU);
+                }
+                resolve("Success");
+            });
+        }).catch(err2 => console.log(err2));
+        
     });
 }
 
@@ -181,40 +189,42 @@ function getPendingBooks(status, connection) {
         connection.query(pendingBooksQuery, function (err1, pendingBooks) {
             if (err1) {
                 return reject(err1);
-            } 
-            var isbnArr = [];
-            var libidArr = [];
-            var finalPendingBooksData = {};
-            for (let i in pendingBooks) {
-                pendingBooks[i]['dateBorrowed'] = new Date(pendingBooks[i]['dateBorrowed']).toDateString();
-                isbnArr.push(pendingBooks[i]['isbn']);
-                libidArr.push(pendingBooks[i]['libid']);
-                finalPendingBooksData[pendingBooks[i]['isbn']] = pendingBooks[i];
             }
-            console.log(finalPendingBooksData);
-
-            getBookDetails(isbnArr.join(" "), connection).then(function (bookData) {
-                for (let i in bookData) {
-                    finalPendingBooksData[bookData[i]['isbn']]['name'] = bookData[i]['name'];
-                    finalPendingBooksData[bookData[i]['isbn']]['author'] = bookData[i]['author'];
-                    finalPendingBooksData[bookData[i]['isbn']]['year'] = bookData[i]['year'];
-                    finalPendingBooksData[bookData[i]['isbn']]['genre'] = bookData[i]['genre'];
-                    finalPendingBooksData[bookData[i]['isbn']]['price'] = bookData[i]['price'];
+            if (pendingBooks.length != 0) {
+                var isbnArr = [];
+                var libidArr = [];
+                var finalPendingBooksData = {};
+                for (let i in pendingBooks) {
+                    pendingBooks[i]['dateBorrowed'] = new Date(pendingBooks[i]['dateBorrowed']).toDateString();
+                    isbnArr.push(pendingBooks[i]['isbn']);
+                    libidArr.push(pendingBooks[i]['libid']);
+                    finalPendingBooksData[pendingBooks[i]['isbn']] = pendingBooks[i];
                 }
 
-                getUserDetails(libidArr.join(" "), connection).then(function (userData) {
-                    var finalUserData = {};
-                    for (let i in userData) {
-                        finalUserData[userData[i]['libid']] = userData[i];
-                    }
-                    for (let isbn in finalPendingBooksData) {
-                        finalPendingBooksData[isbn]['stuName'] = finalUserData[finalPendingBooksData[isbn]['libid']]['firstName'];
-                        finalPendingBooksData[isbn]['uniqueNum'] = finalUserData[finalPendingBooksData[isbn]['libid']]['uniqueNum'];
+                getBookDetails(isbnArr.join(" "), connection).then(function (bookData) {
+                    for (let i in bookData) {
+                        finalPendingBooksData[bookData[i]['isbn']]['name'] = bookData[i]['name'];
+                        finalPendingBooksData[bookData[i]['isbn']]['author'] = bookData[i]['author'];
+                        finalPendingBooksData[bookData[i]['isbn']]['year'] = bookData[i]['year'];
+                        finalPendingBooksData[bookData[i]['isbn']]['genre'] = bookData[i]['genre'];
+                        finalPendingBooksData[bookData[i]['isbn']]['price'] = bookData[i]['price'];
                     }
 
-                    resolve(finalPendingBooksData);
-                }).catch(errU => console.log(errU));
-            }).catch(errB => console.log(errB));  
+                    getUserDetails(libidArr.join(" "), connection).then(function (userData) {
+                        var finalUserData = {};
+                        for (let i in userData) {
+                            finalUserData[userData[i]['libid']] = userData[i];
+                        }
+                        for (let isbn in finalPendingBooksData) {
+                            finalPendingBooksData[isbn]['stuName'] = finalUserData[finalPendingBooksData[isbn]['libid']]['firstName'];
+                            finalPendingBooksData[isbn]['uniqueNum'] = finalUserData[finalPendingBooksData[isbn]['libid']]['uniqueNum'];
+                        }
+                        resolve(finalPendingBooksData);
+                    }).catch(errU => console.log(errU));
+                }).catch(errB => console.log(errB));
+            } else { 
+                resolve("NIL");
+            }
         });
     });
 }
@@ -333,7 +343,30 @@ function updateTransaction(libid, isbn, connection) {
     });  
 }
 
+//Function to process pending books
+function processPendingBooks(idAndisbn) { 
+    return new Promise(function (resolve, reject) { 
+        sconnect().then(function (connection) {
+            var date = new Date();
+            const dat = date.getFullYear() + "-" + (date.getMonth() + 1) + "-" + date.getDate();
+            var transacQuery = "UPDATE librarymanagement.booktransaction SET dateReturned = '" + dat + "', status = 0 WHERE ";
+            for (let i in idAndisbn) {
+                let temp = idAndisbn[i].split(" ");
+                transacQuery += "libid = " + temp[0] + " AND isbn = " + temp[1] + " OR ";
+            }
+            transacQuery = transacQuery.substring(0, transacQuery.length - 4);
+            connection.query(transacQuery, function (err1) { 
+                if (err1) { 
+                    return reject(err1);
+                }
+                resolve("Success");
+            });
+        }).catch(err => console.log(err));
+    });
+    
+}
 
+    
 // Sending the loginpage on get request  
 app.get("/login", function (req, res) { 
     if (req.cookies['Student']) {
@@ -502,7 +535,7 @@ app.post("/dashboard", validateSearchConfig, function (req, res){
 app.post("/confirmBooks", function (req, res) {
     const booksArray = req.body['booksSelected'].split(" ");
     sconnect().then(function (resS) {
-        updateCopies(booksArray, resS).then(function (stat) {
+        updateCopies(booksArray, 0).then(function (stat) {
             getBookDetails(req.body['booksSelected'], resS).then(function (bookData) {
                 updateTransaction(req.cookies['Student'], req.body['booksSelected'], resS).then(function (ans) { 
                     res.render('confirmBooks', { borrowedBookData: bookData });
@@ -518,13 +551,12 @@ app.get("/staff", function (req, res) {
     if (req.cookies['Staff']) {
         sconnect().then(function (resS) {
             getPendingBooks(1, resS).then(function (pendingBooksData) {
-                defPendingBooks = pendingBooksData;
+                defPendingBooks = pendingBooksData == "NIL" ? {} : pendingBooksData;
                 getPendingBooks(0, resS).then(function (yBBooksData) { 
-                    defYetBorrowedBooks = yBBooksData;
+                    defYetBorrowedBooks = yBBooksData == "NIL" ? {} : yBBooksData;
                     res.render('staff', { pendingBooks: defPendingBooks, yetBorrowedBooks: defYetBorrowedBooks });
                 }).catch(err5 => console.log(err5));
-                
-                
+                         
             }).catch(err1 => console.log(err1));
         }).catch(err => console.log(err));
     } else { 
@@ -543,13 +575,29 @@ app.get("/logout", function (req, res) {
     if (req.cookies['Student']) {
         res.clearCookie('Student');
     } else if (req.cookies['Staff']) {
-        console.log("sdfsd");
         res.clearCookie('Staff');
     } else { 
         res.clearCookie('Admin');
     }
     res.redirect('login');
 });
+
+//Processing pending books in staff
+app.post("/processPendingBooks", function (req, res) { 
+    var idAndisbn = req.body.pendingBooksData.split(",");
+    var isbnArr = [];
+    for (let i in idAndisbn) {
+        let temp = idAndisbn[i].split(" ");
+        isbnArr.push(temp[1]);
+    }
+    console.log(isbnArr);
+    processPendingBooks(idAndisbn).then(function (stat) { 
+        updateCopies(isbnArr, 1).then(function (stat2) { 
+            res.redirect('staff');
+        }).catch(err3 => console.log(err3));
+    }).catch(err => console.log(err));
+});
+
 
 // Listening to port 3000
 app.listen(3000, function(){
