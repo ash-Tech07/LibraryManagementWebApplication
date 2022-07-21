@@ -64,7 +64,7 @@
                 <% if (pendingBooks) { %>
                     <% let i=1; %>
                         <% for(let isbn in pendingBooks) { %>
-                            <tr id = "<%= pendingBooks[isbn]['libid'] + ' ' + isbn %>">
+                            <tr id = "<%= pendingBooks[isbn]['libid'] + ' ' + pendingBooks[isbn]['isbn'] %>">
                                 <td>
                                     <%= i %>
                                 </td>
@@ -90,7 +90,7 @@
                                     <%= pendingBooks[isbn]['year'] %>
                                 </td>
                                 <td>
-                                    <%= isbn %>
+                                    <%= pendingBooks[isbn]['isbn'] %>
                                 </td>
                                 <td>
                                     <%= pendingBooks[isbn]['price'] %>
@@ -104,13 +104,13 @@
             </tbody>
         </table>
 
-        <div class="processBtn mt-4 ms-auto me-auto">
+        <div class="mt-4 ms-auto me-auto">
             <form action="/processPendingBooks" method="post">
                 <input type="text" name="pendingBooksData" id="processPendingBooksInp" style="display: none;">
                 <button class="btn btn-outline-primary disabled" id="pendSubBtn" type="submit">Return Books</button>
             </form>
-            
         </div>
+
     </div>
 
 
@@ -136,7 +136,7 @@
                 <% if (yetBorrowedBooks) { %>
                     <% let i=1; %>
                         <% for(let isbn in yetBorrowedBooks) { %>
-                            <tr>
+                            <tr id = "<%= yetBorrowedBooks[isbn]['libid'] + ' ' + yetBorrowedBooks[isbn]['isbn'] %>">
                                 <td>
                                     <%= i %>
                                 </td>
@@ -162,7 +162,7 @@
                                     <%= yetBorrowedBooks[isbn]['year'] %>
                                 </td>
                                 <td>
-                                    <%= isbn %>
+                                    <%= yetBorrowedBooks[isbn]['isbn'] %>
                                 </td>
                                 <td>
                                     <%= yetBorrowedBooks[isbn]['price'] %>
@@ -170,11 +170,19 @@
                                 <td>
                                     <%= yetBorrowedBooks[isbn]['dateBorrowed'] %>
                                 </td>
-                                <td><button class="btn btn-outline-dark btn-sm">Give</button></td>
+                                <td><button class="btn btn-outline-dark btn-sm" onclick="processYetBorrowedBooks(this, 'yetBorrowedBooksDataInp');">Give</button></td>
                             </tr>
                             <% i++; } } %>
             </tbody>
         </table>
+
+        <div class="mt-4 ms-auto me-auto">
+            <form action="/processYetBorrowedBooks" method="post">
+                <input type="text" name="yetBorrowedBooksData" id="yetBorrowedBooksDataInp" style="display: none;">
+                <button class="btn btn-outline-primary disabled" id="yetBorrowSubBtn" type="submit">Lend Books</button>
+            </form>
+        </div>
+
     </div>
 
 
