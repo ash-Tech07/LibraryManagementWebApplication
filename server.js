@@ -45,7 +45,15 @@ const app = express();
 app.use(cookieParser());
 app.set('view engine', 'ejs');
 app.use(express.static("public"));
-app.use(bodyParser.urlencoded({extended: true}));
+app.use(bodyParser.urlencoded({ extended: true }));
+
+//Middleware for no caching
+function nocache(req, res, next) { 
+    res.header('Cache-Control', 'private, no-store, no-cache, must-revalidate');
+    res.header('Pragma', 'no-cache');
+    res.header('Expires', '-1');
+    next();
+}
 
 
 // Function to create a temporary connection to MySql DB 
@@ -418,6 +426,7 @@ function getStaffName(libid) {
     });
 }
 
+//Function to add new book
 function addNewBook(bookData) { 
     return new Promise(function (resolve, reject) {
         sconnect().then(function (connection) {
@@ -432,10 +441,76 @@ function addNewBook(bookData) {
     });
 }
 
+//Function to get user details
+function getUserDetails() {
+    return new Promise((resolve, reject) => {
+        sconnect().then(function (connection) { 
+            const staffDetailsQuery = "SELECT * FROM librarymanagement.libusers WHERE userType = 'Staff' OR userType = 'Student'";
+            connection.query(staffDetailsQuery, function (err, rows) {
+                if (err) {
+                    return reject(err);
+                }
+                resolve(rows);
+            });
+        }).catch(err => { return reject(err); });
+    });
+}
+
+//Function to get all transaction details
+function getAllTransactions() { 
+    return new Promise(function (resolve, reject) { 
+        sconnect().then(function (connection) { 
+            const transactionQuery = "SELECT * FROM librarymanagement.booktransaction";
+            connection.query(transactionQuery, function (err, rows) {
+                if (err) {
+                    return reject(err);
+                }
+                resolve(rows);
+            });
+        }).catch(err => console.log(err));
+    });
+}
+
+//Function to remove book and user data
+function removeData(id, type) {
+    return new Promise(function (resolve, reject) { 
+        sconnect().then(function (connection) {
+            let removeQuery = "";
+            if (type == "user") {
+                removeQuery = "DELETE FROM librarymanagement.libusers WHERE libid = " + id;
+            } else { 
+                removeQuery = "DELETE FROM librarymanagement.books WHERE isbn = " + id;
+            }
+            connection.query(removeQuery, function (err, result) { 
+                if (err) {
+                    return reject(err);
+                }
+                resolve("Success");
+            });
+        }).catch(err => reject(err));
+    });
+}
+
+//Function to get all book data
+function getAllBookDetails() {
+    return new Promise(function (resolve, reject) {
+        sconnect().then(function (connection) {
+            const getUserDetailsQuery = "SELECT * FROM librarymanagement.books";
+            connection.query(getUserDetailsQuery, function (err, results) {
+                if (err) {
+                    return reject(err);
+                }
+                resolve(results);
+            });
+        }).catch(err => reject(err));
+        
+    });
+}
+
     
 // Sending the loginpage on get request  
-app.get("/login", function (req, res) { 
-    if (req.cookies['Student']) {
+app.get("/login", nocache, function (req, res) { 
+    if (req.cookies['Student'] != undefined) {
         getPrevBooksData(req.cookies['Student']).then(function (prevBookData) { 
             defPrevBooksData = prevBookData;
             getCurrentBooksData(req.cookies['Student']).then(function (currBookData) { 
@@ -444,15 +519,18 @@ app.get("/login", function (req, res) {
             }).catch(err2 => console.log(err2));
             
         }).catch(err => console.log(err));
-    } else if (req.cookies['Staff']) {
+    } else if (req.cookies['Staff'] != undefined) {
         res.redirect('staff');
-    }else {
+    }else if (req.cookies['Admin'] != undefined) {
+        res.redirect('admin');
+    }
+    else {
         res.render('login', { lUserErr: '', lPassErr: '' });
     }
 });
 
 // Sending the signup page on get request  
-app.get("/signUp", function (req, res) {
+app.get("/signUp", nocache, function (req, res) {
     if (req.cookies['Student']) {
         getPrevBooksData(req.cookies['Student']).then(function (prevBookData) {
             defPrevBooksData = prevBookData;
@@ -529,7 +607,10 @@ app.post("/signUp", validateSignUpConfig, function (req, res) {
             newLibId(resS).then(function (nLibId) {
                 userData.push(nLibId[0]['newlibid']);
                 signupInsert(userData, resS).then(function (_statusI) {
-                    if (validationResult(req)['errors'][0]['param'] == 'roll' && req.body.userType != 'Student') {
+
+                    res.cookie(req.body.userType, nLibId[0]['newlibid']);
+
+                    if (Object.keys(validationResult(req)['errors']).length != 0 && validationResult(req)['errors'][0]['param'] == 'roll' && req.body.userType != 'Student') {
                         if (req.body.userType == 'Staff') {
                             res.redirect('staff');
                         } else {
@@ -571,7 +652,7 @@ app.post("/signUp", validateSignUpConfig, function (req, res) {
 });
 
 //Sending the dashboard page on get requset
-app.get("/dashboard", function (req, res) {
+app.get("/dashboard", nocache, function (req, res) {
     
     if (req.cookies['Student']) {
         getPrevBooksData(req.cookies['Student']).then(function (prevBookData) {
@@ -613,7 +694,7 @@ app.post("/confirmBooks", function (req, res) {
 });
 
 //Sending the staff homepage on get request
-app.get("/staff", function (req, res) { 
+app.get("/staff", nocache, function (req, res) { 
     if (req.cookies['Staff']) {
         sconnect().then(function (resS) {
             getPendingBooks(1, resS).then(function (pendingBooksData) {
@@ -630,6 +711,65 @@ app.get("/staff", function (req, res) {
     }
     
 });
+
+//Sending admin dashboard on get request
+app.get("/admin", nocache, function (req, res) {
+    if (req.cookies['Admin'] != undefined) { 
+        getUserDetails().then(function (userDetails) {
+            studentDetails = {};
+            staffDetails = {};
+            completedTransactionDetails = {};
+            possibleTransactionDetails = {};
+            pendingTransactionDetails = {};
+    
+            let j = 0;
+            let k = 0;
+            let l = 0;
+    
+            for (let i in userDetails) {
+                userDetails[i]["dob"] = new Date(userDetails[i]["dob"]).toDateString();
+                userDetails[i]["created"] = new Date(userDetails[i]["created"]).toUTCString();
+                if (userDetails[i]["userType"] == "Student") {
+                    studentDetails[j] = userDetails[i];
+                    j += 1;
+                } else {
+                    staffDetails[k] = userDetails[i];
+                    k += 1;
+                }
+            }
+            j = 0;
+            k = 0;
+            getAllTransactions().then(function (transactions) {
+                for (let i in transactions) {
+                    transactions[i]["dateBorrowed"] = new Date(transactions[i]["dateBorrowed"]).toDateString();
+                    transactions[i]["dateReturned"] = transactions[i]["dateReturned"] != null ? new Date(transactions[i]["dateReturned"]).toDateString() : "-";
+                    transactions[i]["status"] = transactions[i]["status"] == 0 ? "In Library" : "With Student";
+                    transactions[i]["fine"] = transactions[i]["fine"] == null ? "-" : transactions[i]["fine"];
+                    transactions[i]["staffName"] = transactions[i]["staffName"] == null ? "-" : transactions[i]["staffName"];
+    
+                    if (transactions[i]["dateReturned"] != "-") {
+                        completedTransactionDetails[j] = transactions[i];
+                        j += 1;
+                    } else if ( transactions[i]["dateReturned"] == "-" && transactions[i]["status"] == "With Student" ) {
+                        pendingTransactionDetails[k] = transactions[i];
+                        k += 1;
+                    } else { 
+                        possibleTransactionDetails[l] = transactions[i];
+                        l += 1;
+                    }
+                }
+                getAllBookDetails().then(function (bookDetails) { 
+    
+                    res.render('admin', { staffDetails: staffDetails, studentDetails: studentDetails, completedTransactionDetails: completedTransactionDetails, pendingTransactionDetails: pendingTransactionDetails, possibleTransactionDetails: possibleTransactionDetails, bookDetails: bookDetails });
+                }).catch(err => console.log(err));
+            }).catch(err => console.log(err));
+        }).catch(err => console.log(err));
+    } else {
+        res.redirect('/login');
+    }
+    
+});
+
 
 //Processing pending books in staff
 app.post("/processPendingBooks", function (req, res) { 
@@ -690,17 +830,37 @@ app.post("/addNewBook", validateAddNewBookConfig, function (req, res) {
     }
 });
 
-
-
-//DEMO
-app.get("/admin", function (req, res) {
-    res.render('admin');
+//Removing user in admin dashboard
+app.post('/removeData', function (req, res) {
+    let type = "";
+    let id = "";
+    if (req.body.libid) {
+        type = "user";
+        id = req.body.libid;
+    } else { 
+        type = "book";
+        id = req.body.isbn;
+    }
+    removeData(id, type).then(function (result) { 
+        res.redirect('/admin');
+    }).catch(err => reject(err));
 });
+
 
 // Listening to port 3000
 app.listen(3000, function(){
     console.log("Server is up and running in port 3000!");
 });
+
+
+
+
+
+
+
+
+
+
 
 
 
