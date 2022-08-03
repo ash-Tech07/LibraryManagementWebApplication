@@ -19,15 +19,26 @@ const validateSignUpConfig = [  body('fname').trim().escape().isLength({min:3}).
                                 body('roll').trim().escape().isLength({min:10, max:10}).withMessage("Enter a valid roll no."),
                                 body('uniqueNum').trim().escape().isNumeric().withMessage('Enter a valid unique number').isLength({min: 14, max: 14}).withMessage('Enter a valid unique number') 
                             ];
+const validateAddNewBookConfig = [  body('bname').trim().escape().isLength({ min: 3 }).withMessage('Enter a valid book name').isAlpha().withMessage('Enter a valid book name'),
+                                    body('author').trim().escape().isLength({ min: 3 }).withMessage('Enter a valid author name').isAlpha().withMessage('Enter a valid author name'),
+                                    body('genre').trim().escape().isLength({ min: 3 }).withMessage('Enter a valid genre').isAlpha().withMessage('Enter a valid genre'),
+                                    body('isbn').trim().escape().isLength({ min: 15, max: 15 }).withMessage("Enter a valid ISBN").isNumeric().withMessage("Enter a valid ISBN"),
+                                    body('year').trim().escape().isLength({ min: 4, max: 4 }).withMessage("Enter a valid year").isNumeric().withMessage("Enter a valid year"),
+                                    body('price').trim().escape().isNumeric().withMessage("Enter a valid price"),
+                                    body('noOfCopies').trim().escape().isNumeric().withMessage("Enter a valid number"),
+                                ];
 const validateSearchConfig = [body('searchBar').trim().escape().toLowerCase()];
 
 //Default values for all configuration
 const defSearch = [{ 'name': '12 Rule to Learn to Code', 'author': 'Angele Yu', 'year': '2020', 'genre': 'education', 'price': '378.12', 'isbn': '9798671342703', 'noOfCopies': 1 }];
 const defSearchConfig = [{ 'searchTag': 'Search By:', 'searchBarText': '' }];
+const defAddBookErrors = [{ "bname": "", "author": "", "year": "", "genre": "", "price": "", "isbn": "", "noOfCopies": ""}];                 
+var def_conn_err = [{ "err": "" }];
+
 var defPrevBooksData = {};
 var defCurrBorrowedBooks = {};  
 var defPendingBooks = {};   
-var defYetBorrowedBooks = {};                 
+var defYetBorrowedBooks = {};
 
 // Setting the express environment
 const app = express();
@@ -372,11 +383,10 @@ function processPendingBooks(idAndisbn) {
 }
 
 //Changing the status in transaction table after student borrowed
-function changeStatus(idAndisbn) { 
+function changeStatus(idAndisbn, staffName) { 
     return new Promise(function (resolve, reject) { 
         sconnect().then(function (connection) { 
-
-            var statusQuery = "UPDATE librarymanagement.booktransaction SET status = 1 WHERE status = 0 AND ( ";
+            var statusQuery = "UPDATE librarymanagement.booktransaction SET status = 1, staffName = '" + staffName + "' WHERE status = 0 AND ( ";
             for (let i in idAndisbn) {
                 let temp = idAndisbn[i].split(" ");
                 statusQuery += "( libid = " + temp[0] + " AND isbn = " + temp[1] + " ) OR ";
@@ -390,6 +400,35 @@ function changeStatus(idAndisbn) {
                 resolve("Success");
             });
         }).catch(err => console.log(err));
+    });
+}
+
+//Get staff name
+function getStaffName(libid) { 
+    return new Promise(function (resolve, reject) { 
+        sconnect().then(function (connection) { 
+            const getStaffNameQuery = "SELECT firstName FROM librarymanagement.libusers WHERE libid = " + libid;
+            connection.query(getStaffNameQuery, function (err, row) { 
+                if (err) { 
+                    return reject(err);
+                }
+                resolve(row[0]['firstName']);
+            });
+        }).catch(err => console.log(err));
+    });
+}
+
+function addNewBook(bookData) { 
+    return new Promise(function (resolve, reject) {
+        sconnect().then(function (connection) {
+            const addBookQuery = "INSERT INTO librarymanagement.books (name, author, year, genre, price, noOfCopies, isbn) VALUES (?, ?, ?, ?, ?, ?, ?)";
+            connection.query(addBookQuery, bookData, function (err, stat) { 
+                if (err) { 
+                    return reject(err);
+                }
+                resolve("Success");
+            });
+        });
     });
 }
 
@@ -431,37 +470,20 @@ app.get("/signUp", function (req, res) {
     
 });
 
-//Sending the dashboard page on get requset
-app.get("/dashboard", function (req, res) {
-    
-    if (req.cookies['Student']) {
-        getPrevBooksData(req.cookies['Student']).then(function (prevBookData) {
-            defPrevBooksData = (prevBookData != "NIL") ? prevBookData : {};
-            getCurrentBooksData(req.cookies['Student']).then(function (currBookData) {
-                defCurrBorrowedBooks = (currBookData != "NIL") ? currBookData : {};
-                res.render('dashboard', { searchData: defSearch, searchConfig: defSearchConfig, prevBooksData: defPrevBooksData, currBooksData: defCurrBorrowedBooks });
-            }).catch(err2 => console.log(err2));
-        }).catch(err => console.log(err));
-    } else {
-        res.redirect('login');
-    }
-    
-});
-
 // Validating and processing the login form
-app.post("/login", validateLoginConfig, function(req, res){
-    var bpErr = {'libErr': '', 'passErr': ''};
-    if(Object.keys(validationResult(req)['errors']).length != 0){
+app.post("/login", validateLoginConfig, function (req, res) {
+    var bpErr = { 'libErr': '', 'passErr': '' };
+    if (Object.keys(validationResult(req)['errors']).length != 0) {
         bpErr['libErr'] = validationResult(req)['errors'][0]['msg'];
-        res.render('login', {lUserErr: bpErr['libErr'], lPassErr: bpErr['passErr']});
+        res.render('login', { lUserErr: bpErr['libErr'], lPassErr: bpErr['passErr'] });
     }
-    else{
-        sconnect().then(function(resc){
-            exeLogin(req.body.libid, resc).then(function(rows){
-                if(rows.length == 0){
+    else {
+        sconnect().then(function (resc) {
+            exeLogin(req.body.libid, resc).then(function (rows) {
+                if (rows.length == 0) {
                     bpErr['passErr'] = "Lib-Id or Password mismatch";
-                    res.render('login', {lUserErr: bpErr['libErr'], lPassErr: bpErr['passErr']});
-                }else{
+                    res.render('login', { lUserErr: bpErr['libErr'], lPassErr: bpErr['passErr'] });
+                } else {
                     const temp = bcrypt.compareSync(req.body.lpass, rows[0]['pass']);
                     if (!temp) {
                         bpErr['passErr'] = "Lib-Id or Password mismatch";
@@ -470,7 +492,7 @@ app.post("/login", validateLoginConfig, function(req, res){
                         res.cookie(rows[0]['userType'], rows[0]['libid'].toString());
                         if (rows[0]['userType'] == 'Student') {
                             getPrevBooksData(rows[0]['libid']).then(function (prevBookData) {
-                            
+
                                 getCurrentBooksData(rows[0]['libid']).then(function (currBookData) {
                                     defPrevBooksData = prevBookData;
                                     defCurrBorrowedBooks = currBookData;
@@ -485,13 +507,13 @@ app.post("/login", validateLoginConfig, function(req, res){
                         }
                     }
                 }
-             }).catch(err3 => console.log(err3));
+            }).catch(err3 => console.log(err3));
         }).catch(_errc1 => console.log("Could not establish a connection"));
     }
 });
 
 // Validating and processing the signup form 
-app.post( "/signUp", validateSignUpConfig, function(req, res){
+app.post("/signUp", validateSignUpConfig, function (req, res) {
     var sErr = { 'fname': '', 'lname': '', 'email': '', 'pass': '', 'roll': '', 'uniqueNum': '' };
     if (Object.keys(validationResult(req)['errors']).length <= 1) {
         var userData = Object.values(req.body);
@@ -519,11 +541,11 @@ app.post( "/signUp", validateSignUpConfig, function(req, res){
 
                 }).catch(errI => console.log(errI));
             }).catch(errL => console.log(errL));
-        }).catch(errS => console.log(errS));       
-    }else{
+        }).catch(errS => console.log(errS));
+    } else {
         const valErr = validationResult(req)['errors'];
-        for(let errIter in valErr){
-            switch(valErr[errIter]['param']){
+        for (let errIter in valErr) {
+            switch (valErr[errIter]['param']) {
                 case 'fname':
                     sErr['fname'] = valErr[errIter]['msg'];
                     break;
@@ -544,8 +566,25 @@ app.post( "/signUp", validateSignUpConfig, function(req, res){
                     break;
             }
         }
-        res.render('signUp', {fname: sErr['fname'], lname: sErr['lname'], email: sErr['email'], pass: sErr['pass'], roll: sErr['roll'], uniqueNum: sErr['uniqueNum']});
+        res.render('signUp', { fname: sErr['fname'], lname: sErr['lname'], email: sErr['email'], pass: sErr['pass'], roll: sErr['roll'], uniqueNum: sErr['uniqueNum'] });
     }
+});
+
+//Sending the dashboard page on get requset
+app.get("/dashboard", function (req, res) {
+    
+    if (req.cookies['Student']) {
+        getPrevBooksData(req.cookies['Student']).then(function (prevBookData) {
+            defPrevBooksData = (prevBookData != "NIL") ? prevBookData : {};
+            getCurrentBooksData(req.cookies['Student']).then(function (currBookData) {
+                defCurrBorrowedBooks = (currBookData != "NIL") ? currBookData : {};
+                res.render('dashboard', { searchData: defSearch, searchConfig: defSearchConfig, prevBooksData: defPrevBooksData, currBooksData: defCurrBorrowedBooks });
+            }).catch(err2 => console.log(err2));
+        }).catch(err => console.log(err));
+    } else {
+        res.redirect('login');
+    }
+    
 });
 
 // Processing the search from dashboard page to server and back
@@ -581,7 +620,7 @@ app.get("/staff", function (req, res) {
                 defPendingBooks = pendingBooksData == "NIL" ? {} : pendingBooksData;
                 getPendingBooks(0, resS).then(function (yBBooksData) { 
                     defYetBorrowedBooks = yBBooksData == "NIL" ? {} : yBBooksData;
-                    res.render('staff', { pendingBooks: defPendingBooks, yetBorrowedBooks: defYetBorrowedBooks });
+                    res.render('staff', { pendingBooks: defPendingBooks, yetBorrowedBooks: defYetBorrowedBooks, addBookErrors: defAddBookErrors, conn_err: def_conn_err });
                 }).catch(err5 => console.log(err5));
                          
             }).catch(err1 => console.log(err1));
@@ -590,23 +629,6 @@ app.get("/staff", function (req, res) {
         res.redirect('login');
     }
     
-});
-
-//DEMO
-app.get("/admin", function (req, res) { 
-    res.render('admin');
-});
-
-//Logging out the user
-app.get("/logout", function (req, res) {
-    if (req.cookies['Student']) {
-        res.clearCookie('Student');
-    } else if (req.cookies['Staff']) {
-        res.clearCookie('Staff');
-    } else { 
-        res.clearCookie('Admin');
-    }
-    res.redirect('login');
 });
 
 //Processing pending books in staff
@@ -627,13 +649,68 @@ app.post("/processPendingBooks", function (req, res) {
 //Processing yet to be borrowed books in staff
 app.post("/processYetBorrowedBooks", function (req, res) {
     var idAndisbn = req.body.yetBorrowedBooksData.split(",");
-    
-    changeStatus(idAndisbn).then(function (stat) {
-        res.redirect('staff');
+    getStaffName(req.cookies['Staff']).then(function (staffName) { 
+        changeStatus(idAndisbn, staffName).then(function (stat) {
+            res.redirect('staff');
+        }).catch(err2 => console.log(err2));
     }).catch(err => console.log(err));
+});
+
+//Logging out the user
+app.get("/logout", function (req, res) {
+    if (req.cookies['Student']) {
+        res.clearCookie('Student');
+    } else if (req.cookies['Staff']) {
+        res.clearCookie('Staff');
+    } else {
+        res.clearCookie('Admin');
+    }
+    res.redirect('login');
+});
+
+//Adding new book in staff
+app.post("/addNewBook", validateAddNewBookConfig, function (req, res) { 
+    var errors = validationResult(req);
+    var addBookErrors = [];
+    if (Object.keys(errors['errors']).length > 0) {
+        for (let i in errors['errors']) {
+            addBookErrors[errors['errors'][i]['param']] = errors['errors'][i]['msg'];
+        }
+        res.render('staff', { pendingBooks: defPendingBooks, yetBorrowedBooks: defYetBorrowedBooks, addBookErrors: addBookErrors, conn_err: def_conn_err });
+    } else { 
+        addNewBook([ req.body.bname, req.body.author, req.body.year, req.body.genre, req.body.price, req.body.noOfCopies, req.body.isbn ]).then(function (status) { 
+            if (status == "Success") {
+                def_conn_err["err"] = "*book added successfully";
+                res.redirect('staff');
+            } else { 
+                let conn_err = [{ "err": "Database problem, Please try again after some time." }];
+                res.render('staff', { pendingBooks: defPendingBooks, yetBorrowedBooks: defYetBorrowedBooks, addBookErrors, conn_err: conn_err });
+            }
+        });  
+    }
+});
+
+
+
+//DEMO
+app.get("/admin", function (req, res) {
+    res.render('admin');
 });
 
 // Listening to port 3000
 app.listen(3000, function(){
     console.log("Server is up and running in port 3000!");
 });
+
+
+
+
+
+
+
+
+
+
+
+
+

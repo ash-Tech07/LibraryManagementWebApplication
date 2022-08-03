@@ -9,7 +9,7 @@
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
         integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
-    <link rel="stylesheet" href="/css/stu.css">
+    <link rel="stylesheet" href="/css/styles.css">
 
     <title>Welcome to Dashboard</title>
 </head>
@@ -186,7 +186,84 @@
     </div>
 
 
+    <!-- ADD NEW BOOKS TO DATABASE -->
 
+    <!-- SIGNUP PAGE -->
+    <div class="card mt-5 wid2">
+        <div class="card-header">
+            <p>Add New Book</p>
+        </div>
+        <div class="card-body">
+            <div class="addBook mt-2">
+                <p class="text-success">
+                    <%= conn_err["err"] %>
+                </p>
+                <form action="/addNewBook" class="row" method="POST">
+    
+                    <div class="col-md-6 form-floating mt-3">
+                        <input type="text" class="form-control" id="bname" name="bname" placeholder="12 Rules To Learn To Code">
+                        <label for="bname" class="form-label" style="padding-left: 18px;">Book Name</label>
+                        <p class="small text-danger">
+                            <%= addBookErrors["bname"] %>
+                        </p>
+                    </div>
+    
+                    <div class="col-md-6 form-floating mt-3">
+                        <input type="text" class="form-control" id="author" name="author" placeholder="Angela Yu">
+                        <label for="lname" class="form-label" style="padding-left: 18px;">Author</label>
+                        <p class="small text-danger">
+                            <%= addBookErrors["author"] %>
+                        </p>
+                    </div>
+    
+                    <div class="col-md-6 form-floating mt-4">
+                        <input type="text" class="form-control" id="genre" name="genre" placeholder="Education">
+                        <label for="inputEmail4" class="form-label" style="padding-left: 18px;">Genre</label>
+                        <p class="small text-danger">
+                            <%= addBookErrors["genre"] %>
+                        </p>
+                    </div>
+    
+                    <div class="col-md-6 form-floating mt-4">
+                        <input type="text" class="form-control" id="isbn" name="isbn" placeholder="123456789012345">
+                        <label for="isbn" class="form-label" style="padding-left: 18px;">ISBN</label>
+                        <p class="small text-danger">
+                            <%= addBookErrors["isbn"] %>
+                        </p>
+                    </div>
+    
+                    <div class="col-6 form-floating mt-4">
+                        <input type="text" class="form-control" id="year" name="year" placeholder="2020">
+                        <label for="year" class="form-label" style="padding-left: 18px;">Published Year</label>
+                        <p class="small text-danger">
+                            <%= addBookErrors["year"] %>
+                        </p>
+                    </div>
+    
+                    <div class="col-md-6 form-floating mt-4">
+                        <input type="text" class="form-control" id="price" name="price" placeholder="123.45">
+                        <label for="price" class="form-label" style="padding-left: 18px;">Price</label>
+                        <p class="small text-danger">
+                            <%= addBookErrors["price"] %>
+                        </p>
+                    </div>
+
+                    <div class="col-md-6 form-floating mt-4 ms-auto me-auto">
+                        <input type="text" class="form-control" id="noOfCopies" name="noOfCopies" placeholder="1">
+                        <label for="noOfCopies" class="form-label" style="padding-left: 18px;">No Of Copies</label>
+                        <p class="small text-danger">
+                            <%= addBookErrors["noOfCopies"] %>
+                        </p>
+                    </div>
+    
+                    <div class="col-12 mt-4">
+                        <button type="submit" class="btn btn-primary" name="reg_btn">Add Book</button>
+                    </div>
+    
+                </form>
+            </div>
+        </div>
+    </div>
 
 
     <br><br><br>

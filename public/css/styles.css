@@ -1,3 +1,9 @@
+* {
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+}
+
 html{
   scroll-behavior: smooth;
 }
@@ -21,7 +27,7 @@ html{
   max-width: 400px;
 }
 
-.signup{
+.signup, .addBook{
   text-align: center;
   margin: auto;
   max-width: 600px;
@@ -47,7 +53,4 @@ p{
 .container .row .col-md-3 .txtcent{
   text-align: center;
 }
-
-
-
 
