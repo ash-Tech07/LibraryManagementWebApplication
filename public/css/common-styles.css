@@ -1,0 +1,169 @@
+* {
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
+    transition: all 0.3s ease !important;
+}
+  
+html{
+    scroll-behavior: smooth;
+}
+  
+body{
+    width: 100vw;
+    background-image: -webkit-linear-gradient(80deg, #47B5FF 50%, #FFFFFF 50%);
+}
+  
+a, p{
+    text-decoration: none;
+    margin: 0;
+}
+  
+.nav-link{
+    color: #FFFFFF !important; 
+}
+.nav-link:hover{
+    color: #EEEEEE !important; 
+}
+  
+ul{
+    padding:0;
+    margin:0;
+    list-style-type:none;
+    display:inline-block;
+}
+  
+.main-txt{
+    font-size: 19px;
+    color: #FFFFFF;
+}
+  
+.sub-txt{
+    color: #FFFFFF;
+    font-size: 14px;
+}
+  
+.logo{
+    border: 1px solid #FFFFFF; 
+    border-radius: 10%;
+    height: 42px;
+    width: 42px;
+}
+  
+span{
+    color: #FFFFFF;
+}
+  
+#navbarStyles{
+    font-family: 'Nunito Sans', sans-serif;
+    color: #FFFFFF;
+    background-color: #47B5FF;
+    box-shadow: 5px 5px 15px -5px rgba(0, 0, 0, 0.3);
+}
+  
+.card, .addBook{
+    font-family: 'Nunito Sans', sans-serif;
+    margin: auto;
+    text-align: center;
+    box-shadow: 5px 5px 15px -5px rgba(0, 0, 0, 0.3);
+}
+  
+.card-header{
+    background-color: #47B5FF;
+    color: #FFFFFF;
+    font-size: 25px;
+}
+
+.card-body {
+  font-size: 15px;
+}
+  
+.no-border {
+    border: 0;
+    box-shadow: none; 
+}
+  
+.form-control:focus, .form-select:focus{
+    box-shadow: inset 0 -4px 0 0 #47B5FF !important;
+}
+  
+.login_btn{
+    background-color: #FFFFFF;
+    color: #47B5FF;
+    border: 1px solid #47B5FF;
+    height: 50px;
+    width: 90px;
+    font-size: 18px;
+}
+.login_btn:hover{
+    background-color: #47B5FF;
+    color: #FFFFFF;
+}
+  
+@media only screen and (max-width: 700px) {
+    .main-txt{
+      font-size: 17px;
+    }
+    .sub-txt{
+      font-size: 13px;
+    }
+    .card-header{
+      font-size: 22px;
+    }
+}
+  
+@media only screen and (max-width: 500px) {
+    .main-txt{
+      font-size: 15px;
+    }
+    .card-header{
+      font-size: 20px;
+    }
+    .logo{
+      height: 36px;
+      width: 36px;
+    }
+    #login_btn{
+      font-size: 17px;
+    }
+}
+  
+@media only screen and (max-width: 450px) {
+    .main-txt{
+      font-size: 13px;
+    }
+    .card-header{
+      font-size: 18px;
+    }
+    .sub-txt{
+      font-size: 12px;
+    }
+}
+  
+@media only screen and (max-width: 400px) {
+    .main-txt{
+      font-size: 11px;
+    }
+    .card-header{
+      font-size: 17px;
+    }
+    .sub-txt{
+      font-size: 9px;
+    }
+    .logo{
+      height: 30px;
+      width: 30px;
+    }
+    #login_btn{
+      font-size: 16px;
+    }
+}
+
+@media only screen and (max-width: 350px) {
+  .card-header{
+    font-size: 15px;
+  }
+}
+  
+  
+  

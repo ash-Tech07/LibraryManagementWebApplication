@@ -1,0 +1,50 @@
+body{
+    height: 100%;
+    overflow-x: hidden;
+}
+
+.card#signup{
+    margin-top: 100px;
+    max-width: 600px;
+    margin-bottom: 100px;
+}
+
+.userTypeInp{
+    max-width: 300px;
+}
+
+.login_btn{
+    margin-top: 20px;
+}
+
+.form-heading{
+    font-size: 17px;
+}
+
+@media only screen and (max-width: 750px) {
+    .card#signup{
+        max-width: 500px;
+    }
+}
+
+@media only screen and (max-width: 650px) {
+    .card#signup{
+        max-width: 400px;
+    }
+}
+
+@media only screen and (max-width: 500px) {
+    .card#signup{
+        max-width: 350px;
+    }
+}
+
+@media only screen and (max-width: 450px) {
+    .card#signup{
+        max-width: 95vw;
+    }
+
+    .card#signup{
+        margin-top: 50px;
+    }
+}
