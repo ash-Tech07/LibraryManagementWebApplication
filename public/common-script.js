@@ -24,4 +24,7 @@ if (window.location.href.endsWith("signUp")) {
 } else { 
     document.getElementById("main-nav-link").textContent = "LOG OUT";
     document.getElementById("main-nav-link").href = "/logout";
+    if (window.location.href.indexOf("dashboard") != -1) {
+        document.getElementById("custom-style-sheet").setAttribute("href", "css/dashboard-styles.css");
+    }
 }

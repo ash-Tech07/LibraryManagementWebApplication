@@ -30,7 +30,9 @@ const validateAddNewBookConfig = [  body('bname').trim().escape().isLength({ min
 const validateSearchConfig = [body('searchBar').trim().escape().toLowerCase()];
 
 //Default values for all configuration
-const defSearch = [{ 'name': '12 Rule to Learn to Code', 'author': 'Angele Yu', 'year': '2020', 'genre': 'education', 'price': '378.12', 'isbn': '9798671342703', 'noOfCopies': 1 }];
+const pageOffset = 2;
+var page;
+
 const defSearchConfig = [{ 'searchTag': 'Search By:', 'searchBarText': '' }];
 const defAddBookErrors = [{ "bname": "", "author": "", "year": "", "genre": "", "price": "", "isbn": "", "noOfCopies": ""}];                 
 var def_conn_err = [{ "err": "" }];
@@ -117,28 +119,35 @@ function signupInsert(dataArr, connection){
 }
 
 // Function to get the search results from DB
-function searchDB(searchValue, searchFactor, connection) {
+function searchDB(searchValue, searchFactor, page) {
     return new Promise(function (resolve, reject) {
-        var query = "";
+        var query = "SELECT search.row_count, name, author, year, genre, price, noOfCopies FROM librarymanagement.books, (SELECT COUNT(*) as row_count FROM librarymanagement.books WHERE _searchFactor LIKE '_searchValue%') as search HAVING _searchFactor LIKE '_searchValue%' ORDER BY id LIMIT " + ((page - 1) * pageOffset) + ", " + pageOffset;
+        
         if (searchFactor == "Book Name" || searchFactor == "Search By:") {
-            query = "SELECT * FROM librarymanagement.books WHERE name LIKE ?";
+            query = query.replace(/_searchFactor/g, "name");
         }
         else if (searchFactor == "Author Name") {
-            query = "SELECT * FROM librarymanagement.books WHERE author LIKE ?";
+            query = query.replace(/_searchFactor/g, "author");
         } else if (searchFactor == "ISBN") { 
-            query = "SELECT * FROM librarymanagement.books WHERE isbn LIKE ?";
+            query = query.replace(/_searchFactor/g, "isbn");
         } else {
-            query = "SELECT * FROM librarymanagement.books WHERE genre LIKE ?";
+            query = query.replace(/_searchFactor/g, "genre");
         }
         if (searchValue == '*') { 
-            query = "SELECT * FROM librarymanagement.books";
+            query = query.replace(/_searchFactor/g, "name");
+            searchValue = "";
         }
-        connection.query(query, [searchValue+"%"], function (errSQ, rows) { 
-            if (errSQ) { 
-                return reject(errSQ);
-            }
-            resolve(rows);
-        });
+
+        query = query.replace(/_searchValue/g, searchValue);
+
+        sconnect().then(function (connection) { 
+            connection.query(query, [searchValue+"%"], function (errSQ, rows) { 
+                if (errSQ) { 
+                    return reject(errSQ);
+                }
+                resolve(rows);
+            });
+        }).catch(err => console.log(err));
      });
  }
 
@@ -507,7 +516,8 @@ function getAllBookDetails() {
     });
 }
 
-    
+
+
 // Sending the loginpage on get request  
 app.get("/login", nocache, function (req, res) { 
     if (req.cookies['Student'] != undefined) {
@@ -653,13 +663,21 @@ app.post("/signUp", validateSignUpConfig, function (req, res) {
 
 //Sending the dashboard page on get requset
 app.get("/dashboard", nocache, function (req, res) {
-    
+    page = req.query.page == undefined ? 1 : req.query.page;
+    res.page = page;
+    console.log(req.query);
+
     if (req.cookies['Student']) {
         getPrevBooksData(req.cookies['Student']).then(function (prevBookData) {
             defPrevBooksData = (prevBookData != "NIL") ? prevBookData : {};
             getCurrentBooksData(req.cookies['Student']).then(function (currBookData) {
                 defCurrBorrowedBooks = (currBookData != "NIL") ? currBookData : {};
-                res.render('dashboard', { searchData: defSearch, searchConfig: defSearchConfig, prevBooksData: defPrevBooksData, currBooksData: defCurrBorrowedBooks });
+                
+                searchDB("*", "", page).then(function (bookData) { 
+                    let tot_count = bookData[0]['row_count'] == undefined ? [0] : [ Math.ceil(bookData[0]['row_count'] / pageOffset), page];
+                    
+                    res.render('dashboard', { searchData: bookData, searchConfig: defSearchConfig, prevBooksData: defPrevBooksData, currBooksData: defCurrBorrowedBooks, tot_count: tot_count });
+                }).catch(err => console.log(err));
             }).catch(err2 => console.log(err2));
         }).catch(err => console.log(err));
     } else {
@@ -669,13 +687,14 @@ app.get("/dashboard", nocache, function (req, res) {
 });
 
 // Processing the search from dashboard page to server and back
-app.post("/dashboard", validateSearchConfig, function (req, res){
-    sconnect().then(function (resQ) {
-        searchDB(req.body.searchBar, req.body.searchFactor, resQ).then(function (searchResults) {
-            const searchConfig = [{ 'searchTag': req.body.searchFactor, 'searchBarText': req.body.searchBar, 'noOfSearchResults': Object.keys(searchResults).length}];
-            res.render('dashboard', { searchData: searchResults, searchConfig: searchConfig, prevBooksData: defPrevBooksData, currBooksData: defCurrBorrowedBooks });
-        }).catch(errDB => console.log(errDB));
-    }).catch(errCBD => console.log(errCBD));
+app.post("/dashboard", validateSearchConfig, function (req, res) {
+    page = 1;
+
+    searchDB(req.body.searchBar, req.body.searchFactor, page).then(function (searchResults) {
+        const searchConfig = [{ 'searchTag': req.body.searchFactor, 'searchBarText': req.body.searchBar, 'noOfSearchResults': Object.keys(searchResults).length}];
+        res.render('dashboard', { searchData: searchResults, searchConfig: searchConfig, prevBooksData: defPrevBooksData, currBooksData: defCurrBorrowedBooks });
+    }).catch(errDB => console.log(errDB));
+            
 });
 
 //Selecting and update the no of copies

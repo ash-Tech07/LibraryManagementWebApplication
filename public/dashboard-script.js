@@ -1,3 +1,4 @@
+
 var noOfBooksSelected = 0;
 var booksSelected = [];
 
@@ -45,9 +46,9 @@ function addBook(id) {
         newewIsbn.appendChild(isbn);
     }
     if (noOfBooksSelected >= 1) {
-        document.getElementById("subBtn").classList.remove("disabled");
+        document.getElementById("lend_btn").style.display = "block";
     } else { 
-        document.getElementById("subBtn").classList.add("disabled");
+        document.getElementById("lend_btn").style.display = "none";
     }
     document.getElementById("booksSelectedInp").value = booksSelected.join(" ");
 }
