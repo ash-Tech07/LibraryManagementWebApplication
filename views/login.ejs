@@ -1,31 +1,38 @@
 <%- include('partials/header') %>
+<link rel="stylesheet" href="/css/login-styles.css">
   
 <!-- LOGIN PAGE -->
-  <div class="card" id="home">
-      <div class="card-header">
-        <p>Log In</p>
+    <div class="wrapper">
+        <div class="card" id="home">
+            <div class="card-header">
+                <p>Log In</p>
+            </div>
+            <div class="card-body">
+                <div class="mt-4 text-center mx-auto">
+                  <form action= "/login" method="POST">
+                    <div class="form-floating mb-3">
+                      <input name="libid" type="text" id="libId" class="form-control shadow-none no-border" placeholder="0000" autocomplete="off" required>
+                      <label for="libId">Library ID</label>
+                      <p class="small text-danger"><%= lUserErr %></p>
+                    </div>
+
+                    <div class="form-floating mb-3">
+                      <input name="lpass" type="password" id="pass" class="form-control shadow-none no-border" placeholder="Password" required>
+                      <label for="placeValuePassword">Password</label>
+                      <p class="small text-danger"><%= lPassErr %></p>
+                    </div>
+            
+                    <div class="form-check mb-4">
+                      <input type="checkbox" class="fomr-check-input" id="placeValueBox">
+                      <label for="placeValueBox" class="checkbox-txt">Remember me</label>
+                    </div>
+            
+                    <button type="submit" class="btn btn-lg login_btn" name="log_btn">Log In</button>
+                  </form>
+                </div>
+              </div>
+          </div>
       </div>
-      <div class="card-body">
-        <div class="mt-4 text-center mx-auto">
-          <form action= "/login" method="POST">
-            <div class="form-floating mb-3">
-              <input name="libid" type="text" id="libId" class="form-control shadow-none no-border" placeholder="0000" autocomplete="off" required>
-              <label for="libId">Library ID</label>
-              <p class="small text-danger"><%= lUserErr %></p>
-            </div>
-            <div class="form-floating mb-3">
-              <input name="lpass" type="password" id="pass" class="form-control shadow-none no-border" placeholder="Password" required>
-              <label for="placeValuePassword">Password</label>
-              <p class="small text-danger"><%= lPassErr %></p>
-            </div>
-            <div class="form-check mb-4">
-              <input type="checkbox" class="fomr-check-input" id="placeValueBox">
-              <label for="placeValueBox" class="checkbox-txt">Remember me</label>
-            </div>
-            <button type="submit" class="btn btn-lg login_btn" name="log_btn">Log In</button>
-          </form>
-        </div>
-      </div>
-  </div>
+  
 
 <%- include('partials/footer') %>

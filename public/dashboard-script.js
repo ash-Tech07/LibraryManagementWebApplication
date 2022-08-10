@@ -23,7 +23,7 @@ function addBook(id) {
         document.getElementById(id).classList.add("active");
         noOfBooksSelected += 1;
         booksSelected.push(id);
-        let tableRef = document.getElementById("selectedTable");
+        let tableRef = document.getElementById("selectedTableBody");
         let newRow = tableRef.insertRow();
         let newName = newRow.insertCell(0);
         let newAuth = newRow.insertCell(1);
@@ -47,13 +47,17 @@ function addBook(id) {
     }
     if (noOfBooksSelected >= 1) {
         document.getElementById("lend_btn").style.display = "block";
+        document.getElementById("selectedBooksHeading").style.display = "block";
+        document.getElementById("selectedTable").style.display = "table";
+
     } else { 
         document.getElementById("lend_btn").style.display = "none";
+        document.getElementById("selectedBooksHeading").style.display = "none";
+        document.getElementById("selectedTable").style.display = "none";
+
     }
     document.getElementById("booksSelectedInp").value = booksSelected.join(" ");
 }
-
-
 
 
 document.getElementById("bookLend").onsubmit = function (form) { 
@@ -62,3 +66,10 @@ document.getElementById("bookLend").onsubmit = function (form) {
         this.submit();
     }
 }
+
+
+
+
+
+
+

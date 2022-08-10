@@ -21,6 +21,11 @@ body{
     font-size: 17px;
 }
 
+.content{
+    font-size: 14px;
+}
+
+
 @media only screen and (max-width: 750px) {
     .card#signup{
         max-width: 500px;

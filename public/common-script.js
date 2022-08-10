@@ -20,7 +20,7 @@ if (window.location.href.endsWith("signUp")) {
 } else if (window.location.href.endsWith("login")) {
     document.getElementById("main-nav-link").textContent = "SIGN UP";
     document.getElementById("main-nav-link").href = "/signUp";
-    document.getElementById("custom-style-sheet").setAttribute("href", "css/login-styles.css");
+    // document.getElementById("custom-style-sheet").setAttribute("href", "css/login-styles.css");
 } else { 
     document.getElementById("main-nav-link").textContent = "LOG OUT";
     document.getElementById("main-nav-link").href = "/logout";

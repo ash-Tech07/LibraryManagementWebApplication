@@ -12,6 +12,13 @@ html{
 body{
     width: 100vw;
     background-image: -webkit-linear-gradient(80deg, #47B5FF 50%, #FFFFFF 50%);
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.wrapper{
+  flex: 1;
 }
   
 a, p{
@@ -99,6 +106,55 @@ span{
     background-color: #47B5FF;
     color: #FFFFFF;
 }
+
+
+/* footer{
+  margin-top: 50px;
+  background-color: #47B5FF;
+}
+
+.footer-links{
+  color: #000;
+}
+.footer-links ul li:hover{
+  color: #47B5FF;
+} */
+
+/* h5{
+  color: #FFFFFF;
+} */
+
+.copyright{
+  width: 100vw;
+  color: #FFFFFF;
+  background-color: #47B5FF;
+  height: 50px;
+
+}
+
+.content{
+  padding: 15px;
+}
+
+.copyright p{
+  display: inline-block;
+}
+
+.copyright a{
+  padding: 0 5px;
+  color: #FFFFFF;
+}
+.copyright a:hover{
+  color: #EEEEEE;
+}
+
+
+
+
+
+
+
+
   
 @media only screen and (max-width: 700px) {
     .main-txt{

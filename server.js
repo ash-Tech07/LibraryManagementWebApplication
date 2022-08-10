@@ -30,10 +30,9 @@ const validateAddNewBookConfig = [  body('bname').trim().escape().isLength({ min
 const validateSearchConfig = [body('searchBar').trim().escape().toLowerCase()];
 
 //Default values for all configuration
-const pageOffset = 2;
+const pageOffset = 10;
 var page;
 
-const defSearchConfig = [{ 'searchTag': 'Search By:', 'searchBarText': '' }];
 const defAddBookErrors = [{ "bname": "", "author": "", "year": "", "genre": "", "price": "", "isbn": "", "noOfCopies": ""}];                 
 var def_conn_err = [{ "err": "" }];
 
@@ -41,6 +40,8 @@ var defPrevBooksData = {};
 var defCurrBorrowedBooks = {};  
 var defPendingBooks = {};   
 var defYetBorrowedBooks = {};
+var defSearchConfig = [{ 'searchTag': 'Search By:', 'noOfSearchResults': 1, 'searchBarText': '' }];
+
 
 // Setting the express environment
 const app = express();
@@ -121,7 +122,7 @@ function signupInsert(dataArr, connection){
 // Function to get the search results from DB
 function searchDB(searchValue, searchFactor, page) {
     return new Promise(function (resolve, reject) {
-        var query = "SELECT search.row_count, name, author, year, genre, price, noOfCopies FROM librarymanagement.books, (SELECT COUNT(*) as row_count FROM librarymanagement.books WHERE _searchFactor LIKE '_searchValue%') as search HAVING _searchFactor LIKE '_searchValue%' ORDER BY id LIMIT " + ((page - 1) * pageOffset) + ", " + pageOffset;
+        var query = "SELECT search.row_count, name, author, publication_date, genre, price, noOfCopies, isbn FROM librarymanagement.books, (SELECT COUNT(*) as row_count FROM librarymanagement.books WHERE _searchFactor LIKE '_searchValue%') as search HAVING _searchFactor LIKE '_searchValue%' ORDER BY id LIMIT " + ((page - 1) * pageOffset) + ", " + pageOffset;
         
         if (searchFactor == "Book Name" || searchFactor == "Search By:") {
             query = query.replace(/_searchFactor/g, "name");
@@ -195,7 +196,7 @@ function getBookDetails(isbns, connection) {
         if (isbns.length == 0) { 
             resolve("NIL");
         }
-        var bookDataQuery = "SELECT isbn, name, author, year, genre, price, isbn FROM librarymanagement.books WHERE ";
+        var bookDataQuery = "SELECT isbn, name, author, publication_date, genre, price, isbn FROM librarymanagement.books WHERE ";
         const isbnArr = isbns.toString().split(" ");
         for (let isbn in isbnArr) { 
             bookDataQuery += "isbn = " + isbnArr[isbn] + " OR ";
@@ -245,7 +246,7 @@ function getPendingBooks(status, connection) {
                             
                             finalPendingBooksData[i]['name'] = newBookData[finalPendingBooksData[i]['isbn']]['name'];
                             finalPendingBooksData[i]['author'] = newBookData[finalPendingBooksData[i]['isbn']]['author'];
-                            finalPendingBooksData[i]['year'] = newBookData[finalPendingBooksData[i]['isbn']]['year'];
+                            finalPendingBooksData[i]['publication_date'] = newBookData[finalPendingBooksData[i]['isbn']]['publication_date'];
                             finalPendingBooksData[i]['genre'] = newBookData[finalPendingBooksData[i]['isbn']]['genre'];
                             finalPendingBooksData[i]['price'] = newBookData[finalPendingBooksData[i]['isbn']]['price'];
                         
@@ -439,7 +440,7 @@ function getStaffName(libid) {
 function addNewBook(bookData) { 
     return new Promise(function (resolve, reject) {
         sconnect().then(function (connection) {
-            const addBookQuery = "INSERT INTO librarymanagement.books (name, author, year, genre, price, noOfCopies, isbn) VALUES (?, ?, ?, ?, ?, ?, ?)";
+            const addBookQuery = "INSERT INTO librarymanagement.books (name, author, publication_date, genre, price, noOfCopies, isbn) VALUES (?, ?, ?, ?, ?, ?, ?)";
             connection.query(addBookQuery, bookData, function (err, stat) { 
                 if (err) { 
                     return reject(err);
@@ -663,9 +664,8 @@ app.post("/signUp", validateSignUpConfig, function (req, res) {
 
 //Sending the dashboard page on get requset
 app.get("/dashboard", nocache, function (req, res) {
-    page = req.query.page == undefined ? 1 : req.query.page;
+    page = req.query.page == undefined ? 1 : Number(req.query.page);
     res.page = page;
-    console.log(req.query);
 
     if (req.cookies['Student']) {
         getPrevBooksData(req.cookies['Student']).then(function (prevBookData) {
@@ -673,10 +673,14 @@ app.get("/dashboard", nocache, function (req, res) {
             getCurrentBooksData(req.cookies['Student']).then(function (currBookData) {
                 defCurrBorrowedBooks = (currBookData != "NIL") ? currBookData : {};
                 
-                searchDB("*", "", page).then(function (bookData) { 
-                    let tot_count = bookData[0]['row_count'] == undefined ? [0] : [ Math.ceil(bookData[0]['row_count'] / pageOffset), page];
-                    
-                    res.render('dashboard', { searchData: bookData, searchConfig: defSearchConfig, prevBooksData: defPrevBooksData, currBooksData: defCurrBorrowedBooks, tot_count: tot_count });
+                
+                searchDB(defSearchConfig[0]['searchBarText'], defSearchConfig[0]['searchTag'], page).then(function (bookData) { 
+                    let tot_count = bookData.length == 0 ? [1, page] : [Math.ceil(bookData[0]['row_count'] / pageOffset), page];
+                    if (page > tot_count[0]) {
+                        res.redirect('/dashboard?page=' + tot_count[0]);
+                    } else { 
+                        res.render('dashboard', { searchData: bookData, searchConfig: defSearchConfig, prevBooksData: defPrevBooksData, currBooksData: defCurrBorrowedBooks, tot_count: tot_count });
+                    }
                 }).catch(err => console.log(err));
             }).catch(err2 => console.log(err2));
         }).catch(err => console.log(err));
@@ -691,8 +695,12 @@ app.post("/dashboard", validateSearchConfig, function (req, res) {
     page = 1;
 
     searchDB(req.body.searchBar, req.body.searchFactor, page).then(function (searchResults) {
-        const searchConfig = [{ 'searchTag': req.body.searchFactor, 'searchBarText': req.body.searchBar, 'noOfSearchResults': Object.keys(searchResults).length}];
-        res.render('dashboard', { searchData: searchResults, searchConfig: searchConfig, prevBooksData: defPrevBooksData, currBooksData: defCurrBorrowedBooks });
+        let tot_count = searchResults.length == 0 ? [1, page] : [Math.ceil(searchResults[0]['row_count'] / pageOffset), page];
+        defSearchConfig[0]['searchTag'] = req.body.searchFactor;
+        defSearchConfig[0]['searchBarText'] = req.body.searchBar;
+        defSearchConfig[0]['noOfSearchResults'] = Object.keys(searchResults).length;
+
+        res.render('dashboard', { searchData: searchResults, searchConfig: defSearchConfig, prevBooksData: defPrevBooksData, currBooksData: defCurrBorrowedBooks, tot_count: tot_count });
     }).catch(errDB => console.log(errDB));
             
 });
@@ -837,7 +845,7 @@ app.post("/addNewBook", validateAddNewBookConfig, function (req, res) {
         }
         res.render('staff', { pendingBooks: defPendingBooks, yetBorrowedBooks: defYetBorrowedBooks, addBookErrors: addBookErrors, conn_err: def_conn_err });
     } else { 
-        addNewBook([ req.body.bname, req.body.author, req.body.year, req.body.genre, req.body.price, req.body.noOfCopies, req.body.isbn ]).then(function (status) { 
+        addNewBook([ req.body.bname, req.body.author, req.body.publication_date, req.body.genre, req.body.price, req.body.noOfCopies, req.body.isbn ]).then(function (status) { 
             if (status == "Success") {
                 def_conn_err["err"] = "*book added successfully";
                 res.redirect('staff');
