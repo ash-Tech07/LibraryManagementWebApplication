@@ -11,10 +11,10 @@ html{
   
 body{
     width: 100vw;
-    background-image: -webkit-linear-gradient(80deg, #47B5FF 50%, #FFFFFF 50%);
     display: flex;
     flex-direction: column;
     min-height: 100vh;
+    font-family: 'Nunito Sans', sans-serif;
 }
 
 .wrapper{
@@ -105,6 +105,63 @@ span{
 .login_btn:hover{
     background-color: #47B5FF;
     color: #FFFFFF;
+}
+
+.tables{
+  align-items: center;
+  max-width: 95vw;
+  text-align: center;
+}
+
+.tables thead{
+  background-color: #47B5FF;
+  color: #FFFFFF;
+}
+
+table tbody tr{
+  text-align: left;
+}
+
+.dashboard-heading{
+  max-width: 60vw;
+  text-align: center;
+  color: #47B5FF;
+}
+
+.dashboard-btn{
+  color: #47B5FF;
+  background-color: #FFFFFF;
+  border: 1px solid #47B5FF;
+}
+.dashboard-btn:hover{
+  color: #FFFFFF;
+  background-color: #47B5FF;
+}
+
+
+ul.nav.nav-tabs{
+  margin-top: 10px;
+  font-family: 'Nunito Sans', sans-serif;
+}
+
+ul.nav.nav-tabs li.nav-item{
+  border: 1px solid 47B5FF;
+  border-bottom: 0;
+  background-color: #47B5FF !important;
+  margin: 10px 2px 0;
+  border-radius: 12% 12% 0 0;
+}
+
+ul.nav.nav-tabs li.nav-item a.nav-link{
+  color: #000 !important;
+}
+
+ul.nav.nav-tabs li.nav-item button.nav-link.active {
+  color: #47B5FF !important;
+  border-color: #47B5FF;
+  border-bottom: 0;
+  border-radius: 12% 12% 0 0;
+
 }
 
 

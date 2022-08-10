@@ -5,15 +5,15 @@
 
         <ul class="nav nav-tabs" id="myTab" role="tablist">
             <li class="nav-item" role="presentation">
-                <button class="nav-link active" id="borrow-tab" data-bs-toggle="tab" data-bs-target="#borrow" type="button" role="tab" aria-controls="borrow" aria-selected="true" onclick="responsiveReloadTab();">Borrow Books</button>
+                <button class="nav-link active" id="borrow-tab" data-bs-toggle="tab" data-bs-target="#borrow" type="button" role="tab" aria-controls="borrow" aria-selected="true">Borrow Books</button>
             </li>
             
             <li class="nav-item" role="presentation">
-                <button class="nav-link" id="pending-tab" data-bs-toggle="tab" data-bs-target="#pending" type="button" role="tab" aria-controls="pending" aria-selected="false" onclick="responsiveReloadTab();">Pending Books</button>
+                <button class="nav-link" id="pending-tab" data-bs-toggle="tab" data-bs-target="#pending" type="button" role="tab" aria-controls="pending" aria-selected="false">Pending Books</button>
             </li>
         
             <li class="nav-item" role="presentation">
-                <button class="nav-link" id="borrowed-tab" data-bs-toggle="tab" data-bs-target="#borrowed" type="button" role="tab" aria-controls="borrowed" aria-selected="false" onclick="responsiveReloadTab();">Borrowed Books</button>
+                <button class="nav-link" id="borrowed-tab" data-bs-toggle="tab" data-bs-target="#borrowed" type="button" role="tab" aria-controls="borrowed" aria-selected="false">Borrowed Books</button>
             </li>
         </ul>
       
@@ -89,7 +89,6 @@
                 
                 
                 <div class="page">
-    
                     <nav>
                         <ul class="pagination justify-content-center" id="<%= tot_count[0] %>">
                             <% if (tot_count[1] == 1) { %>

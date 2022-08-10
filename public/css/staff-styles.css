@@ -1,0 +1,12 @@
+body{
+    overflow-x: hidden;
+}
+
+.addBook{
+    max-width: 650px;
+}
+
+.dashboard-btn.active{
+    background-color: #47B5FF;
+    color: #FFFFFF;
+}

@@ -1,68 +1,47 @@
-<!doctype html>
-<html lang="en">
+<%- include('partials/header') %>
+<link rel="stylesheet" href="/css/staff-styles.css">
 
-<head>
-    <!-- Required meta tags -->
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <div class="wrapper">
 
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
-        integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
-    <link rel="stylesheet" href="/css/styles.css">
-
-    <title>Welcome to Dashboard</title>
-</head>
-
-<body>
-    <!-- NAVBAR -->
-    <div class="navbar navbar-expand-md navbar-light sticky-top" style="background-color: #e3f2fd;">
-        <div class="container-fluid mt-2">
-            <!-- NAVBAR BRAND -->
-            <div class="navbar-brand ms-3">
-                <img class="align-text-bottom mb-1" height="40px" width="40px" src="/logo.png"
-                    alt="Anna University Logo">
-                <ul style="list-style-type:none;display:inline-block;padding:0;margin:0;">
-                    <li style="font-size:18px">Department of Information Technology</li>
-                    <li style="font-size:13px">Anna University, MIT Campus</li>
-                </ul>
-            </div>
-            <!-- NAVBAR TOGGLER -->
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarText"
-                aria-controls="navbarText" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <!-- NAVBAR LINKS -->
-            <div class="collapse navbar-collapse justify-content-end me-auto" id="navbarText">
-                <ul class="navbar-nav me-5">
-                    <li class="nav-item"> <a class="nav-link" href="/logout">LOG OUT</a></li>
-                </ul>
-            </div>
-        </div>
-    </div>
+        <ul class="nav nav-tabs" id="myTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="borrow-tab" data-bs-toggle="tab" data-bs-target="#borrow" type="button" role="tab" aria-controls="borrow" aria-selected="true" >Pending Books</button>
+            </li>
+            
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="pending-tab" data-bs-toggle="tab" data-bs-target="#pending" type="button" role="tab" aria-controls="pending" aria-selected="false" >Yet to be Borrowed Books</button>
+            </li>
+        
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="borrowed-tab" data-bs-toggle="tab" data-bs-target="#borrowed" type="button" role="tab" aria-controls="borrowed" aria-selected="false">Add Book</button>
+            </li>
+        </ul>
 
 
-    <!-- PENDING TO BE RETURNED BOOKS TABLE -->
-    <div class="cont mt-5 ms-auto me-auto text-center" style="max-width: 95vw;">
-        <h1 class="mb-3 ms-auto me-auto" style="max-width: 60vw;text-align: center;">Pending Books</h1>
-        <table class="table table-striped table-hover">
-            <thead>
-                <th>S. NO</th>
-                <th>Lib-Id</th>
-                <th>Student Name</th>
-                <th>Unique Number</th>
-                <th>Book Name</th>
-                <th>Author Name</th>
-                <th>Genre</th>
-                <th>Year</th>
-                <th>ISBN</th>
-                <th>Price</th>
-                <th>Borrowed On</th>
-                <th>Action</th>
-            </thead>
-            <tbody>
-                <% if (pendingBooks) { %>
-                    <% let i=1; %>
+
+        <div class="tab-content" id="myTabContent">
+    
+            <div class="tab-pane fade show active" id="borrow" role="tabpanel" aria-labelledby="borrow-tab">
+                <!-- PENDING TO BE RETURNED BOOKS TABLE -->
+                <h1 class="mt-5 mb-3 ms-auto me-auto dashboard-heading">Pending Books</h1>
+                <table class="table table-striped table-hover table-bordered tables ms-auto me-auto">
+                <thead>
+                    <th>S. NO</th>
+                    <th>Lib-Id</th>
+                    <th>Student Name</th>
+                    <th>Unique Number</th>
+                    <th>Book Name</th>
+                    <th>Author Name</th>
+                    <th>Genre</th>
+                    <th>Year</th>
+                    <th>ISBN</th>
+                    <th>Price</th>
+                    <th>Borrowed On</th>
+                    <th>Action</th>
+                </thead>
+                <tbody>
+                    <% if (pendingBooks) { %>
+                        <% let i=1; %>
                         <% for(let isbn in pendingBooks) { %>
                             <tr id = "<%= pendingBooks[isbn]['libid'] + ' ' + pendingBooks[isbn]['isbn'] %>">
                                 <td>
@@ -98,179 +77,202 @@
                                 <td>
                                     <%= pendingBooks[isbn]['dateBorrowed'] %>
                                 </td>
-                                <td><button class="btn btn-outline-dark btn-sm" onclick="processPendingBooks(this, 'processPendingBooksInp');">Return</button></td>
+                                <td><button class="btn btn-sm dashboard-btn" onclick="processPendingBooks(this, 'processPendingBooksInp');">Return</button></td>
                             </tr>
-                            <% i++; } } %>
-            </tbody>
-        </table>
+                    <% i++; } } %>
+                </tbody>
+                </table>
 
-        <div class="mt-4 ms-auto me-auto">
-            <form action="/processPendingBooks" method="post">
-                <input type="text" name="pendingBooksData" id="processPendingBooksInp" style="display: none;">
-                <button class="btn btn-outline-primary disabled" id="pendSubBtn" type="submit">Return Books</button>
-            </form>
-        </div>
-
-    </div>
-
-
-    <!-- PENDING TO BE BORROWED BOOKS TABLE -->
-    <div class="cont mt-5 ms-auto me-auto text-center" style="max-width: 95vw;">
-        <h1 class="mb-3 ms-auto me-auto" style="max-width: 60vw;text-align: center;">Yet to be Borrowed Books</h1>
-        <table class="table table-striped table-hover">
-            <thead>
-                <th>S. NO</th>
-                <th>Lib-Id</th>
-                <th>Student Name</th>
-                <th>Unique Number</th>
-                <th>Book Name</th>
-                <th>Author Name</th>
-                <th>Genre</th>
-                <th>Year</th>
-                <th>ISBN</th>
-                <th>Price</th>
-                <th>Date to be Borrowed on</th>
-                <th>Action</th>
-            </thead>
-            <tbody>
-                <% if (yetBorrowedBooks) { %>
-                    <% let i=1; %>
-                        <% for(let isbn in yetBorrowedBooks) { %>
-                            <tr id = "<%= yetBorrowedBooks[isbn]['libid'] + ' ' + yetBorrowedBooks[isbn]['isbn'] %>">
-                                <td>
-                                    <%= i %>
-                                </td>
-                                <td>
-                                    <%= yetBorrowedBooks[isbn]['libid'] %>
-                                </td>
-                                <td>
-                                    <%= yetBorrowedBooks[isbn]['stuName'] %>
-                                </td>
-                                <td>
-                                    <%= yetBorrowedBooks[isbn]['uniqueNum'] %>
-                                </td>
-                                <td>
-                                    <%= yetBorrowedBooks[isbn]['name'] %>
-                                </td>
-                                <td>
-                                    <%= yetBorrowedBooks[isbn]['author'] %>
-                                </td>
-                                <td>
-                                    <%= yetBorrowedBooks[isbn]['genre'] %>
-                                </td>
-                                <td>
-                                    <%= yetBorrowedBooks[isbn]['year'] %>
-                                </td>
-                                <td>
-                                    <%= yetBorrowedBooks[isbn]['isbn'] %>
-                                </td>
-                                <td>
-                                    <%= yetBorrowedBooks[isbn]['price'] %>
-                                </td>
-                                <td>
-                                    <%= yetBorrowedBooks[isbn]['dateBorrowed'] %>
-                                </td>
-                                <td><button class="btn btn-outline-dark btn-sm" onclick="processYetBorrowedBooks(this, 'yetBorrowedBooksDataInp');">Give</button></td>
-                            </tr>
-                            <% i++; } } %>
-            </tbody>
-        </table>
-
-        <div class="mt-4 ms-auto me-auto">
-            <form action="/processYetBorrowedBooks" method="post">
-                <input type="text" name="yetBorrowedBooksData" id="yetBorrowedBooksDataInp" style="display: none;">
-                <button class="btn btn-outline-primary disabled" id="yetBorrowSubBtn" type="submit">Lend Books</button>
-            </form>
-        </div>
-
-    </div>
-
-
-    <!-- ADD NEW BOOKS TO DATABASE -->
-
-    <!-- ADD NEW BOOKS TO DATABASE -->
-    <div class="card mt-5 wid2">
-        <div class="card-header">
-            <p>Add New Book</p>
-        </div>
-        <div class="card-body">
-            <div class="addBook mt-2">
-                <p class="text-success">
-                    <%= conn_err["err"] %>
-                </p>
-                <form action="/addNewBook" class="row" method="POST">
-    
-                    <div class="col-md-6 form-floating mt-3">
-                        <input type="text" class="form-control" id="bname" name="bname" placeholder="12 Rules To Learn To Code">
-                        <label for="bname" class="form-label" style="padding-left: 18px;">Book Name</label>
-                        <p class="small text-danger">
-                            <%= addBookErrors["bname"] %>
-                        </p>
-                    </div>
-    
-                    <div class="col-md-6 form-floating mt-3">
-                        <input type="text" class="form-control" id="author" name="author" placeholder="Angela Yu">
-                        <label for="lname" class="form-label" style="padding-left: 18px;">Author</label>
-                        <p class="small text-danger">
-                            <%= addBookErrors["author"] %>
-                        </p>
-                    </div>
-    
-                    <div class="col-md-6 form-floating mt-4">
-                        <input type="text" class="form-control" id="genre" name="genre" placeholder="Education">
-                        <label for="inputEmail4" class="form-label" style="padding-left: 18px;">Genre</label>
-                        <p class="small text-danger">
-                            <%= addBookErrors["genre"] %>
-                        </p>
-                    </div>
-    
-                    <div class="col-md-6 form-floating mt-4">
-                        <input type="text" class="form-control" id="isbn" name="isbn" placeholder="123456789012345">
-                        <label for="isbn" class="form-label" style="padding-left: 18px;">ISBN</label>
-                        <p class="small text-danger">
-                            <%= addBookErrors["isbn"] %>
-                        </p>
-                    </div>
-    
-                    <div class="col-6 form-floating mt-4">
-                        <input type="text" class="form-control" id="year" name="year" placeholder="2020">
-                        <label for="year" class="form-label" style="padding-left: 18px;">Published Year</label>
-                        <p class="small text-danger">
-                            <%= addBookErrors["year"] %>
-                        </p>
-                    </div>
-    
-                    <div class="col-md-6 form-floating mt-4">
-                        <input type="text" class="form-control" id="price" name="price" placeholder="123.45">
-                        <label for="price" class="form-label" style="padding-left: 18px;">Price</label>
-                        <p class="small text-danger">
-                            <%= addBookErrors["price"] %>
-                        </p>
-                    </div>
-
-                    <div class="col-md-6 form-floating mt-4 ms-auto me-auto">
-                        <input type="text" class="form-control" id="noOfCopies" name="noOfCopies" placeholder="1">
-                        <label for="noOfCopies" class="form-label" style="padding-left: 18px;">No Of Copies</label>
-                        <p class="small text-danger">
-                            <%= addBookErrors["noOfCopies"] %>
-                        </p>
-                    </div>
-    
-                    <div class="col-12 mt-4">
-                        <button type="submit" class="btn btn-primary" name="reg_btn">Add Book</button>
-                    </div>
-    
-                </form>
+                <div class="mt-5 ms-auto me-auto text-center">
+                    <form action="/processPendingBooks" method="post">
+                        <input type="text" name="pendingBooksData" id="processPendingBooksInp" style="display: none;">
+                        <button class="btn btn-outline-primary disabled dashboard-btn" id="pendSubBtn" type="submit">Return Books</button>
+                    </form>
+                </div>
             </div>
+    
+    
+    
+            <div class="tab-pane fade" id="pending" role="tabpanel" aria-labelledby="pending-tab">
+    
+                <!-- PENDING TO BE BORROWED BOOKS TABLE -->
+                <div class="cont mt-5 ms-auto me-auto text-center">
+                <h1 class="mb-3 ms-auto me-auto dashboard-heading">Yet to be Borrowed Books</h1>
+                <table class="table table-striped table-hover tables table-bordered ms-auto me-auto">
+                <thead>
+                    <th>S. NO</th>
+                    <th>Lib-Id</th>
+                    <th>Student Name</th>
+                    <th>Unique Number</th>
+                    <th>Book Name</th>
+                    <th>Author Name</th>
+                    <th>Genre</th>
+                    <th>Year</th>
+                    <th>ISBN</th>
+                    <th>Price</th>
+                    <th>Date to be Borrowed on</th>
+                    <th>Action</th>
+                </thead>
+                <tbody>
+                    <% if (yetBorrowedBooks) { %>
+                        <% let i=1; %>
+                            <% for(let isbn in yetBorrowedBooks) { %>
+                                <tr id = "<%= yetBorrowedBooks[isbn]['libid'] + ' ' + yetBorrowedBooks[isbn]['isbn'] %>">
+                                    <td>
+                                        <%= i %>
+                                    </td>
+                                    <td>
+                                        <%= yetBorrowedBooks[isbn]['libid'] %>
+                                    </td>
+                                    <td>
+                                        <%= yetBorrowedBooks[isbn]['stuName'] %>
+                                    </td>
+                                    <td>
+                                        <%= yetBorrowedBooks[isbn]['uniqueNum'] %>
+                                    </td>
+                                    <td>
+                                        <%= yetBorrowedBooks[isbn]['name'] %>
+                                    </td>
+                                    <td>
+                                        <%= yetBorrowedBooks[isbn]['author'] %>
+                                    </td>
+                                    <td>
+                                        <%= yetBorrowedBooks[isbn]['genre'] %>
+                                    </td>
+                                    <td>
+                                        <%= yetBorrowedBooks[isbn]['year'] %>
+                                    </td>
+                                    <td>
+                                        <%= yetBorrowedBooks[isbn]['isbn'] %>
+                                    </td>
+                                    <td>
+                                        <%= yetBorrowedBooks[isbn]['price'] %>
+                                    </td>
+                                    <td>
+                                        <%= yetBorrowedBooks[isbn]['dateBorrowed'] %>
+                                    </td>
+                                    <td><button class="btn btn-sm dashboard-btn" onclick="processYetBorrowedBooks(this, 'yetBorrowedBooksDataInp');">Give</button></td>
+                                </tr>
+                                <% i++; } } %>
+                </tbody>
+                </table>
+    
+                <div class="mt-4 ms-auto me-auto">
+                    <form action="/processYetBorrowedBooks" method="post">
+                        <input type="text" name="yetBorrowedBooksData" id="yetBorrowedBooksDataInp" style="display: none;">
+                        <button class="btn disabled dashboard-btn" id="yetBorrowSubBtn" type="submit">Lend Books</button>
+                    </form>
+                </div>
+    
+            </div>
+    
+            </div>
+    
+    
+            <div class="tab-pane fade" id="borrowed" role="tabpanel" aria-labelledby="borrowed-tab">
+    
+                <!-- ADD NEW BOOKS TO DATABASE -->
+                <div class="card mt-5 addBook mb-5">
+                    <div class="card-header">
+                        <p>Add New Book</p>
+                    </div>
+                    <div class="card-body">
+                        <div class="mt-2">
+                        <p class="text-success">
+                            <%= conn_err["err"] %>
+                        </p>
+                        <form action="/addNewBook" class="row" method="POST">
+                        <div class="col-md-6 form-floating mt-3">
+                            <input type="text" class="form-control no-border" id="bname" name="bname" placeholder="12 Rules To Learn To Code">
+                            <label for="bname" class="form-label" style="padding-left: 18px;">Book Name</label>
+                            <p class="small text-danger">
+                                <%= addBookErrors["bname"] %>
+                            </p>
+                        </div>
+        
+                        <div class="col-md-6 form-floating mt-3">
+                            <input type="text" class="form-control no-border" id="author" name="author" placeholder="Angela Yu">
+                            <label for="lname" class="form-label" style="padding-left: 18px;">Author</label>
+                            <p class="small text-danger">
+                                <%= addBookErrors["author"] %>
+                            </p>
+                        </div>
+        
+                        <div class="col-md-6 form-floating mt-4">
+                            <input type="text" class="form-control no-border" id="genre" name="genre" placeholder="Education">
+                            <label for="inputEmail4" class="form-label" style="padding-left: 18px;">Genre</label>
+                            <p class="small text-danger">
+                                <%= addBookErrors["genre"] %>
+                            </p>
+                        </div>
+        
+                        <div class="col-md-6 form-floating mt-4">
+                            <input type="text" class="form-control no-border" id="isbn" name="isbn" placeholder="123456789012345">
+                            <label for="isbn" class="form-label" style="padding-left: 18px;">ISBN</label>
+                            <p class="small text-danger">
+                                <%= addBookErrors["isbn"] %>
+                            </p>
+                        </div>
+        
+                        <div class="col-6 form-floating mt-4">
+                            <input type="text" class="form-control no-border" id="year" name="year" placeholder="2020">
+                            <label for="year" class="form-label" style="padding-left: 18px;">Published Year</label>
+                            <p class="small text-danger">
+                                <%= addBookErrors["year"] %>
+                            </p>
+                        </div>
+        
+                        <div class="col-md-6 form-floating mt-4">
+                            <input type="text" class="form-control no-border" id="price" name="price" placeholder="123.45">
+                            <label for="price" class="form-label" style="padding-left: 18px;">Price</label>
+                            <p class="small text-danger">
+                                <%= addBookErrors["price"] %>
+                            </p>
+                        </div>
+    
+                        <div class="col-md-6 form-floating mt-4 ms-auto me-auto">
+                            <input type="text" class="form-control no-border" id="noOfCopies" name="noOfCopies" placeholder="1">
+                            <label for="noOfCopies" class="form-label" style="padding-left: 18px;">No Of Copies</label>
+                            <p class="small text-danger">
+                                <%= addBookErrors["noOfCopies"] %>
+                            </p>
+                        </div>
+        
+                        <div class="col-12 mt-4">
+                            <button type="submit" class="btn dashboard-btn" name="reg_btn">Add Book</button>
+                        </div>
+        
+                        </form>
+
+                    </div>
+                </div>
+                
+            </div>
+        
         </div>
+    
     </div>
 
 
-    <br><br><br>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
-        integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous">
-    </script>
-    <script type="text/javascript" src="staffScript.js"></script>
-</body>
 
-</html>
+
+
+
+
+
+        
+
+
+        
+
+
+        
+    </div>
+
+    
+
+
+
+    <script type="text/javascript" src="staffScript.js"></script>
+
+<%- include('partials/footer') %>

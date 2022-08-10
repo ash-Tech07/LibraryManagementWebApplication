@@ -1,6 +1,7 @@
 body{
     height: 100%;
     overflow-x: hidden;
+    background-image: -webkit-linear-gradient(80deg, #47B5FF 50%, #FFFFFF 50%);
 }
 
 .card#signup{
