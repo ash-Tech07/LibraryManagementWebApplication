@@ -31,7 +31,6 @@ const validateSearchConfig = [body('searchBar').trim().escape().toLowerCase()];
 
 //Default values for all configuration
 const pageOffset = 10;
-var page;
 
 const defAddBookErrors = [{ "bname": "", "author": "", "year": "", "genre": "", "price": "", "isbn": "", "noOfCopies": ""}];                 
 var def_conn_err = [{ "err": "" }];
@@ -178,10 +177,10 @@ function updateCopies(isbnArr, inc) {
 }
 
 //Function to get previously borrowed books of the logged in user
-function getPreviousBooks(id, connection){ 
+function getPreviousBooks(id, connection, page){ 
     return new Promise(function (resolve, reject) { 
-        const prevBooksQuery = "SELECT * FROM librarymanagement.booktransaction WHERE libid = ? AND dateReturned IS NOT NULL";
-        connection.query(prevBooksQuery,[ id ], function (errP, prevBooks) { 
+        const prevBooksQuery = "SELECT search.row_count, libid, isbn, status, staffName, dateBorrowed, dateReturned, fine FROM librarymanagement.booktransaction, (SELECT COUNT(*) as row_count FROM librarymanagement.booktransaction WHERE libid = ? AND dateReturned IS NOT NULL) as search HAVING libid = ? AND dateReturned IS NOT NULL ORDER BY id LIMIT " + ((Number(page) - 1) * pageOffset) + ", " + pageOffset;
+        connection.query(prevBooksQuery,[ Number(id), Number(id) ], function (errP, prevBooks) { 
             if (errP) { 
                 return reject(errP);
             }
@@ -285,10 +284,10 @@ function getUserDetails(libids, connection) {
 }
 
 //Function the get the currently borrowed books of the user
-function getCurrBooksData(libid, connection) { 
+function getCurrBooksData(libid, connection, page) { 
     return new Promise(function (resolve, reject) { 
-        const currBookDataQuery = "SELECT * FROM librarymanagement.booktransaction WHERE libid = ? AND dateReturned IS NULL";
-        connection.query(currBookDataQuery, [libid], function (err, bookData) { 
+        const currBookDataQuery = "SELECT search.row_count, libid, isbn, status, staffName, dateBorrowed, dateReturned, fine FROM librarymanagement.booktransaction, (SELECT COUNT(*) as row_count FROM librarymanagement.booktransaction WHERE libid = ? AND dateReturned IS NULL) as search HAVING libid = ? AND dateReturned IS NULL ORDER BY id LIMIT " + ((Number(page) - 1) * pageOffset) + ", " + pageOffset;
+        connection.query(currBookDataQuery, [Number(libid), Number(libid)], function (err, bookData) { 
             if (err) { 
                 return reject(err);
             }
@@ -298,10 +297,10 @@ function getCurrBooksData(libid, connection) {
 }
 
 //Function to get the previously borrowed books of the user
-function getPrevBooksData(libid) { 
+function getPrevBooksData(libid, page) { 
     return new Promise(function (resolve, reject) { 
         sconnect().then(function (resS) { 
-            getPreviousBooks(libid, resS).then(function (prevData) { 
+            getPreviousBooks(libid, resS, page).then(function (prevData) { 
                 if (prevData.length != 0) {
                     var isbns = "";
                     for (let i in prevData) {
@@ -318,10 +317,11 @@ function getPrevBooksData(libid) {
                             finalPrevData[prevData[i]['isbn']]['dateBorrowed'] = (new Date(prevData[i]['dateBorrowed'])).toDateString();
                             finalPrevData[prevData[i]['isbn']]['dateReturned'] = (new Date(prevData[i]['dateReturned'])).toDateString();
                         }
-                        resolve(finalPrevData);
+
+                        resolve([finalPrevData, prevData[0]['row_count']]);
                     }).catch(err => { return reject(err); });
                 } else { 
-                    resolve("NIL");
+                    resolve(["NIL", 0]);
                 }
             }).catch(err1 => { return reject(err1); });
         }).catch(err => { return reject(err); });
@@ -329,10 +329,10 @@ function getPrevBooksData(libid) {
 }
 
 //Function to get the currently borrowed books of the user
-function getCurrentBooksData(libid) {
+function getCurrentBooksData(libid, page) {
     return new Promise(function (resolve, reject) {
         sconnect().then(function (resS) {
-            getCurrBooksData(libid, resS).then(function (currData) {
+            getCurrBooksData(libid, resS, page).then(function (currData) {
                 if (currData.length != 0) {
                     var isbns = "";
                     for (let i in currData) {
@@ -346,10 +346,10 @@ function getCurrentBooksData(libid) {
                         for (let i in currData) {
                             finalCurrentBooksData[currData[i]['isbn']]['dateBorrowed'] = (new Date(currData[i]['dateBorrowed'])).toDateString();
                         }
-                        resolve(finalCurrentBooksData);
+                        resolve([finalCurrentBooksData, currData[0]['row_count']]);
                     }).catch(err => { return reject(err); });
                 } else { 
-                    resolve("NIL");
+                    resolve(["NIL", 0]);
                 }
 
             }).catch(err1 => { return reject(err1); });
@@ -580,15 +580,7 @@ app.post("/login", validateLoginConfig, function (req, res) {
                     } else {
                         res.cookie(rows[0]['userType'], rows[0]['libid'].toString());
                         if (rows[0]['userType'] == 'Student') {
-                            getPrevBooksData(rows[0]['libid']).then(function (prevBookData) {
-
-                                getCurrentBooksData(rows[0]['libid']).then(function (currBookData) {
-                                    defPrevBooksData = prevBookData;
-                                    defCurrBorrowedBooks = currBookData;
-                                    res.redirect('/dashboard');
-                                }).catch(err => console.log(err));
-
-                            }).catch(err1 => console.log(err1));
+                            res.redirect('/dashboard/borrowBooks');
                         } else if (rows[0]['userType'] == 'Staff') {
                             res.redirect('/staff');
                         } else {
@@ -628,7 +620,7 @@ app.post("/signUp", validateSignUpConfig, function (req, res) {
                             res.redirect('admin');
                         }
                     } else {
-                        res.redirect('/dashboard');
+                        res.redirect('/dashboard?dashboardTab=borrowBooks');
                     }
 
                 }).catch(errI => console.log(errI));
@@ -664,35 +656,83 @@ app.post("/signUp", validateSignUpConfig, function (req, res) {
 
 //Sending the dashboard page on get requset
 app.get("/dashboard", nocache, function (req, res) {
-    page = req.query.page == undefined ? 1 : Number(req.query.page);
-    res.page = page;
-
     if (req.cookies['Student']) {
-        getPrevBooksData(req.cookies['Student']).then(function (prevBookData) {
-            defPrevBooksData = (prevBookData != "NIL") ? prevBookData : {};
-            getCurrentBooksData(req.cookies['Student']).then(function (currBookData) {
-                defCurrBorrowedBooks = (currBookData != "NIL") ? currBookData : {};
-                
-                
-                searchDB(defSearchConfig[0]['searchBarText'], defSearchConfig[0]['searchTag'], page).then(function (bookData) { 
-                    let tot_count = bookData.length == 0 ? [1, page] : [Math.ceil(bookData[0]['row_count'] / pageOffset), page];
-                    if (page > tot_count[0]) {
-                        res.redirect('/dashboard?page=' + tot_count[0]);
-                    } else { 
-                        res.render('dashboard', { searchData: bookData, searchConfig: defSearchConfig, prevBooksData: defPrevBooksData, currBooksData: defCurrBorrowedBooks, tot_count: tot_count });
-                    }
-                }).catch(err => console.log(err));
-            }).catch(err2 => console.log(err2));
-        }).catch(err => console.log(err));
+        console.log(req.query);
+
+        if (req.query.dashboardTab == "borrowBooks") {
+            res.redirect('/dashboard/borrowBooks');
+        }
+        else if (req.query.dashboardTab == "pendingBooks") {
+            res.redirect('/dashboard/pendingBooks');
+        } else { 
+            res.redirect('/dashboard/borrowedBooks');
+        }  
     } else {
         res.redirect('login');
-    }
-    
+    } 
 });
 
+
+app.get("/dashboard/borrowBooks", nocache, function (req, res) { 
+    if (req.cookies['Student']) {
+        let page = req.query.page == undefined ? 1 : Number(req.query.page);
+        searchDB(defSearchConfig[0]['searchBarText'], defSearchConfig[0]['searchTag'], page).then(function (bookData) {
+            let tot_count = bookData.length == 0 ? [1, page] : [Math.ceil(bookData[0]['row_count'] / pageOffset), page];
+            if (page > tot_count[0]  && tot_count[0] > 0) {
+                res.redirect('/dashboard/borrowBooks?page=' + tot_count[0]);
+            } else {
+                res.render('dashboard-borrow', { searchData: bookData, searchConfig: defSearchConfig, tot_count: tot_count });
+            }
+        }).catch(err => console.log(err));
+    } else { 
+        res.redirect('/login');
+    }
+});
+
+
+app.get("/dashboard/pendingBooks", nocache, function (req, res) { 
+    if (req.cookies['Student']) {
+        let page = req.query.page == undefined ? 1 : Number(req.query.page);
+        getCurrentBooksData(req.cookies['Student'], page).then(function (currBookData) {
+            defCurrBorrowedBooks = (currBookData[0] != "NIL") ? currBookData[0] : {};
+            let tot_count = defCurrBorrowedBooks.length == 0 ? [1, page] : [Math.ceil(currBookData[1] / pageOffset), page];
+            if (page > tot_count[0] && tot_count[0] > 0) {
+                res.redirect('/dashboard/pendingBooks?page=1');
+            } else {
+                console.log(defCurrBorrowedBooks);
+                console.log(tot_count);
+                res.render('dashboard-pending', { currBooksData: defCurrBorrowedBooks, tot_count: tot_count });
+            }
+        }).catch(err2 => console.log(err2));
+
+    } else { 
+        res.redirect('/login');
+    }
+});
+
+
+app.get("/dashboard/borrowedBooks", nocache, function (req, res) { 
+    if (req.cookies['Student']) {
+        let page = req.query.page == undefined ? 1 : Number(req.query.page);
+        getPrevBooksData(req.cookies['Student'], page).then(function (prevBookData) {
+            defPrevBooksData = (prevBookData[0] != "NIL") ? prevBookData[0] : {};
+            let tot_count = prevBookData.length == 0 ? [1, page] : [Math.ceil(prevBookData[1] / pageOffset), page];
+            if (page > tot_count[0] && tot_count[0] > 0) {
+                res.redirect('/dashboard/borrowedBooks?page=1');
+            } else { 
+                res.render('dashboard-borrowed', { prevBooksData: defPrevBooksData, tot_count: tot_count });
+            }     
+        }).catch(err => console.log(err));
+
+    } else { 
+        res.redirect('/login');
+    }
+});
+
+
 // Processing the search from dashboard page to server and back
-app.post("/dashboard", validateSearchConfig, function (req, res) {
-    page = 1;
+app.post("/dashboard/borrowBooks", validateSearchConfig, function (req, res) {
+    let page = 1;
 
     searchDB(req.body.searchBar, req.body.searchFactor, page).then(function (searchResults) {
         let tot_count = searchResults.length == 0 ? [1, page] : [Math.ceil(searchResults[0]['row_count'] / pageOffset), page];
@@ -700,7 +740,7 @@ app.post("/dashboard", validateSearchConfig, function (req, res) {
         defSearchConfig[0]['searchBarText'] = req.body.searchBar;
         defSearchConfig[0]['noOfSearchResults'] = Object.keys(searchResults).length;
 
-        res.render('dashboard', { searchData: searchResults, searchConfig: defSearchConfig, prevBooksData: defPrevBooksData, currBooksData: defCurrBorrowedBooks, tot_count: tot_count });
+        res.render('dashboard-borrow', { searchData: searchResults, searchConfig: defSearchConfig, prevBooksData: defPrevBooksData, currBooksData: defCurrBorrowedBooks, tot_count: tot_count });
     }).catch(errDB => console.log(errDB));
             
 });

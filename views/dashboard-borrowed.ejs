@@ -1,0 +1,102 @@
+<%- include('partials/header') %>
+<link rel="stylesheet" href="/css/dashboard-styles.css">
+
+    <div class="wrapper">
+        <!-- PREVIOUSLY BORROWED BOOKS TABLE -->
+        <h1 class="mt-5 ms-auto me-auto dashboard-heading">Previously Borrowed Books</h1>
+        <table class="table table-striped table-hover mt-2 ms-auto me-auto tables table-bordered" style="max-width: 90vw; text-align: center;">
+            <thead>
+                <tr>
+                    <th>S. NO</th>
+                    <th>Book Name</th>
+                    <th>Author</th>
+                    <th>Year</th>
+                    <th>Genre</th>
+                    <th>Price</th>
+                    <th>ISBN</th>
+                    <th>Date Borrowed</th>
+                    <th>Date Returned</th>
+                    <th>Fine</th>
+                </tr>
+            </thead>
+        
+            <% if (prevBooksData) { %>
+                <% let pageOffset = 10; %>
+                <% let x = (tot_count[1]-1) * pageOffset;%>
+                <% for (let data in prevBooksData){ %>
+                    <tbody>
+                        <tr>
+                            <td>
+                                <%= x+1 %>
+                            </td>
+                            <td>
+                                <%= prevBooksData[data]['name'] %>
+                            </td>
+                            <td>
+                                <%= prevBooksData[data]['author'] %>
+                            </td>
+                            <td>
+                                <%= prevBooksData[data]['publication_date'].substring(0, 4) %>
+                            </td>
+                            <td>
+                                <%= prevBooksData[data]['genre'] %>
+                            </td>
+                            <td>
+                                <%= "₹" + prevBooksData[data]['price'] %>
+                            </td>
+                            <td>
+                                <%= prevBooksData[data]['isbn'] %>
+                            </td>
+                            <td>
+                                <%= prevBooksData[data]['dateBorrowed'] %>
+                            </td>
+                            <td>
+                                <%= prevBooksData[data]['dateReturned'] %>
+                            </td>
+                            <td>
+                                <%= prevBooksData[data]['fine'] %>
+                            </td>
+                        </tr>
+                    </tbody>
+            <% x++; } } %>
+        </table>
+
+
+        <% if (Object.keys(prevBooksData).length == 0) { %>
+            <div class="info text-center ms-auto me-auto mt-2 warnings">Oops! No Books Found</div>
+        <% } %>
+
+        <div class="page">
+            <nav>
+                <ul class="pagination justify-content-center" id="<%= tot_count[0] %>">
+                    <% if (tot_count[1] == 1) { %>
+                        <li class="page-item disabled"><a class="page-link" href="#" tabindex="-1"aria-disabled="true">Previous</a></li>
+                    <% } else { %>
+                        <li class="page-item"><a class="page-link" href="/dashboard/borrowedBooks?page=<%= Number(tot_count[1])-1 %>">Previous</a></li>
+                    <% } %>
+
+                    <div class="pages" id="">
+                        <% if (tot_count[0] != 0) { %>
+                            <% for(let i = 1; i <= tot_count[0]; i++) { %>
+                                <% if (tot_count[1] == i) { %>
+                                    <li class="page-item active" id="pg<%= i %>"><a class="page-link" href="/dashboard/borrowedBooks?page=<%= i %>"><%= i %></a></li>
+                                <% } else { %>
+                                    <li class="page-item" id="pg<%= i %>"><a class="page-link" href="/dashboard/borrowedBooks?page=<%= i %>"><%= i %></a></li>
+                                <% } %>
+                        <% } } %>
+                    </div>
+                
+                    <% if (tot_count[0] == tot_count[1] || tot_count[0] == 0) { %>
+                        <li class="page-item disabled"><a class="page-link"  id="next_btn">Next</a></li>
+                    <% } else { %>
+                        <li class="page-item">
+                            <a class="page-link" id="next_btn" href="/dashboard/borrowedBooks?page=<%= Number(tot_count[1])+1 %>">Next</a>
+                        </li>
+                    <% } %>
+                </ul>
+            </nav>
+        </div>
+    </div>
+    
+
+<%- include('partials/footer') %>

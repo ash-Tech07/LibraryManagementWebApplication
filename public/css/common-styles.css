@@ -164,6 +164,11 @@ ul.nav.nav-tabs li.nav-item button.nav-link.active {
 
 }
 
+.warnings{
+  color: #47B5FF;
+  font-size: 15px;
+}
+
 
 /* footer{
   margin-top: 50px;
