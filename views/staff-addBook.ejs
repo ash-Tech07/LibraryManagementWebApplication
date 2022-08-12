@@ -1,0 +1,85 @@
+<%- include('partials/header') %>
+<link rel="stylesheet" href="/css/staff-styles.css">
+
+
+    <div class="wrapper">
+        <!-- ADD NEW BOOKS TO DATABASE -->
+        <div class="card mt-5 addBook mb-5">
+            <div class="card-header">
+                <p>Add New Book</p>
+            </div>
+            <div class="card-body">
+                <div class="mt-2">
+                    <p class="text-success">
+                        <%= conn_err["err"] %>
+                    </p>
+                    <form action="/staff/addBook" class="row" method="POST">
+                        <div class="col-md-6 form-floating mt-3">
+                            <input type="text" class="form-control no-border" id="bname" name="bname" placeholder="12 Rules To Learn To Code">
+                            <label for="bname" class="form-label" style="padding-left: 18px;">Book Name</label>
+                            <p class="small text-danger">
+                                <%= addBookErrors["bname"] %>
+                            </p>
+                        </div>
+
+                        <div class="col-md-6 form-floating mt-3">
+                            <input type="text" class="form-control no-border" id="author" name="author" placeholder="Angela Yu">
+                            <label for="lname" class="form-label" style="padding-left: 18px;">Author</label>
+                            <p class="small text-danger">
+                                <%= addBookErrors["author"] %>
+                            </p>
+                        </div>
+
+                        <div class="col-md-6 form-floating mt-4">
+                            <input type="text" class="form-control no-border" id="genre" name="genre" placeholder="Education">
+                            <label for="inputEmail4" class="form-label" style="padding-left: 18px;">Genre</label>
+                            <p class="small text-danger">
+                                <%= addBookErrors["genre"] %>
+                            </p>
+                        </div>
+
+                        <div class="col-md-6 form-floating mt-4">
+                            <input type="text" class="form-control no-border" id="isbn" name="isbn" placeholder="123456789012345">
+                            <label for="isbn" class="form-label" style="padding-left: 18px;">ISBN</label>
+                            <p class="small text-danger">
+                                <%= addBookErrors["isbn"] %>
+                            </p>
+                        </div>
+
+                        <div class="col-6 form-floating mt-4">
+                            <input type="text" class="form-control no-border" id="year" name="year" placeholder="2020">
+                            <label for="year" class="form-label" style="padding-left: 18px;">Published Year</label>
+                            <p class="small text-danger">
+                                <%= addBookErrors["year"] %>
+                            </p>
+                        </div>
+
+                        <div class="col-md-6 form-floating mt-4">
+                            <input type="text" class="form-control no-border" id="price" name="price" placeholder="123.45">
+                            <label for="price" class="form-label" style="padding-left: 18px;">Price</label>
+                            <p class="small text-danger">
+                                <%= addBookErrors["price"] %>
+                            </p>
+                        </div>
+
+                        <div class="col-md-6 form-floating mt-4 ms-auto me-auto">
+                            <input type="text" class="form-control no-border" id="noOfCopies" name="noOfCopies" placeholder="1">
+                            <label for="noOfCopies" class="form-label" style="padding-left: 18px;">No Of Copies</label>
+                            <p class="small text-danger">
+                                <%= addBookErrors["noOfCopies"] %>
+                            </p>
+                        </div>
+
+                        <div class="col-12 mt-4">
+                            <button type="submit" class="btn dashboard-btn" name="reg_btn">Add Book</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+    <script type="text/javascript" src="staffScript.js"></script>
+<%- include('partials/footer') %>

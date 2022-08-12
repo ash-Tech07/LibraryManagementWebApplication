@@ -5,6 +5,7 @@ const mysql = require("mysql");
 const bcrypt = require("bcryptjs");
 const { body, validationResult } = require("express-validator");
 const cookieParser = require("cookie-parser");
+const { NUMBER } = require("sequelize");
 const db_config = {
     host: 'localhost',
     user: 'root',
@@ -22,7 +23,7 @@ const validateSignUpConfig = [  body('fname').trim().escape().isLength({min:3}).
 const validateAddNewBookConfig = [  body('bname').trim().escape().isLength({ min: 3 }).withMessage('Enter a valid book name').isAlpha().withMessage('Enter a valid book name'),
                                     body('author').trim().escape().isLength({ min: 3 }).withMessage('Enter a valid author name').isAlpha().withMessage('Enter a valid author name'),
                                     body('genre').trim().escape().isLength({ min: 3 }).withMessage('Enter a valid genre').isAlpha().withMessage('Enter a valid genre'),
-                                    body('isbn').trim().escape().isLength({ min: 15, max: 15 }).withMessage("Enter a valid ISBN").isNumeric().withMessage("Enter a valid ISBN"),
+                                    body('isbn').trim().escape().isLength({ min: 9, max: 9 }).withMessage("Enter a valid ISBN"),
                                     body('year').trim().escape().isLength({ min: 4, max: 4 }).withMessage("Enter a valid year").isNumeric().withMessage("Enter a valid year"),
                                     body('price').trim().escape().isNumeric().withMessage("Enter a valid price"),
                                     body('noOfCopies').trim().escape().isNumeric().withMessage("Enter a valid number"),
@@ -211,10 +212,10 @@ function getBookDetails(isbns, connection) {
 }
 
 //Function to get all the pending books of all users
-function getPendingBooks(status, connection) {
+function getPendingBooks(status, connection, page) {
     return new Promise(function (resolve, reject) { 
-        let pendingBooksQuery = "SELECT * FROM librarymanagement.booktransaction WHERE dateReturned IS NULL AND status = " + status;
-        connection.query(pendingBooksQuery, function (err1, pendingBooks) {
+        let pendingBooksQuery = "SELECT search.row_count, id, libid, isbn, status, staffName, dateBorrowed, dateReturned, fine FROM librarymanagement.booktransaction, (SELECT COUNT(*) as row_count FROM librarymanagement.booktransaction WHERE status = ? AND dateReturned IS NULL) as search HAVING status = ? AND dateReturned IS NULL ORDER BY id LIMIT " + ((page - 1) * pageOffset) + ", " + pageOffset; 
+        connection.query(pendingBooksQuery, [Number(status), Number(status)], function (err1, pendingBooks) {
             if (err1) {
                 return reject(err1);
             }
@@ -226,7 +227,6 @@ function getPendingBooks(status, connection) {
                     pendingBooks[i]['dateBorrowed'] = new Date(pendingBooks[i]['dateBorrowed']).toDateString();
                     isbnArr.push(pendingBooks[i]['isbn']);
                     libidArr.push(pendingBooks[i]['libid']);
-                    // finalPendingBooksData[pendingBooks[i]['isbn']] = pendingBooks[i];
                     finalPendingBooksData[i] = pendingBooks[i];
                 }
 
@@ -252,7 +252,7 @@ function getPendingBooks(status, connection) {
                             finalPendingBooksData[i]['stuName'] = finalUserData[finalPendingBooksData[i]['libid']]['firstName'];
                             finalPendingBooksData[i]['uniqueNum'] = finalUserData[finalPendingBooksData[i]['libid']]['uniqueNum'];
                         }
-                        resolve(finalPendingBooksData);
+                        resolve([finalPendingBooksData, pendingBooks[0]['row_count']]);
                     }).catch(errU => console.log(errU));
                 }).catch(errB => console.log(errB));
             } else { 
@@ -699,8 +699,6 @@ app.get("/dashboard/pendingBooks", nocache, function (req, res) {
             if (page > tot_count[0] && tot_count[0] > 0) {
                 res.redirect('/dashboard/pendingBooks?page=1');
             } else {
-                console.log(defCurrBorrowedBooks);
-                console.log(tot_count);
                 res.render('dashboard-pending', { currBooksData: defCurrBorrowedBooks, tot_count: tot_count });
             }
         }).catch(err2 => console.log(err2));
@@ -763,20 +761,63 @@ app.post("/confirmBooks", function (req, res) {
 //Sending the staff homepage on get request
 app.get("/staff", nocache, function (req, res) { 
     if (req.cookies['Staff']) {
-        sconnect().then(function (resS) {
-            getPendingBooks(1, resS).then(function (pendingBooksData) {
-                defPendingBooks = pendingBooksData == "NIL" ? {} : pendingBooksData;
-                getPendingBooks(0, resS).then(function (yBBooksData) { 
-                    defYetBorrowedBooks = yBBooksData == "NIL" ? {} : yBBooksData;
-                    res.render('staff', { pendingBooks: defPendingBooks, yetBorrowedBooks: defYetBorrowedBooks, addBookErrors: defAddBookErrors, conn_err: def_conn_err });
-                }).catch(err5 => console.log(err5));
-                         
-            }).catch(err1 => console.log(err1));
-        }).catch(err => console.log(err));
+        res.redirect('/staff/pendingBooks');
     } else { 
         res.redirect('login');
     }
     
+});
+
+app.get("/staff/pendingBooks", nocache, function (req, res) { 
+    if (req.cookies['Staff']) {
+        let page = req.query.page == undefined ? 1 : Number(req.query.page);
+        sconnect().then(function (resS) {
+            getPendingBooks(1, resS, page).then(function (pendingBooksData) {
+                defPendingBooks = pendingBooksData[0] == "NIL" ? {} : pendingBooksData[0];
+
+                let tot_count = defPendingBooks.length == 0 ? [1, page] : [Math.ceil(pendingBooksData[1] / pageOffset), page];
+                if (page > tot_count[0] && tot_count[0] > 0) {
+                    res.redirect('/staff/pendingBooks?page=1');
+                } else {
+                    res.render('staff-pending', { pendingBooks: defPendingBooks, tot_count: tot_count });
+                }
+                
+            }).catch(err1 => console.log(err1));
+        }).catch(err => console.log(err));
+    }
+    else { 
+        res.redirect('/login');
+    }
+});
+
+app.get("/staff/yetToBeBorrowedBooks", nocache, function (req, res) { 
+    if (req.cookies['Staff']) {
+        let page = req.query.page == undefined ? 1 : Number(req.query.page);
+        sconnect().then(function (resS) {
+            getPendingBooks(0, resS, page).then(function (yBooksData) {
+                defYetBorrowedBooks = yBooksData[0] == "NIL" ? {} : yBooksData[0];
+
+                let tot_count = defYetBorrowedBooks.length == 0 ? [1, page] : [Math.ceil(yBooksData[1] / pageOffset), page];
+                if (page > tot_count[0] && tot_count[0] > 0) {
+                    res.redirect('/staff/yetToBeBorrowedBooks?page=1');
+                } else {
+                    res.render('staff-borrow', { yetBorrowedBooks: defYetBorrowedBooks, tot_count: tot_count });
+                }
+                
+            }).catch(err1 => console.log(err1));
+        }).catch(err => console.log(err));
+    }
+    else { 
+        res.redirect('/login');
+    }
+});
+
+app.get("/staff/addBook", nocache, function (req, res) { 
+    if (req.cookies['Staff']) {
+        res.render('staff-addBook', {conn_err: def_conn_err, addBookErrors: defAddBookErrors});
+    } else { 
+        res.redirect('login');
+    }
 });
 
 //Sending admin dashboard on get request
@@ -876,22 +917,38 @@ app.get("/logout", function (req, res) {
 });
 
 //Adding new book in staff
-app.post("/addNewBook", validateAddNewBookConfig, function (req, res) { 
+app.post("/staff/addBook", validateAddNewBookConfig, function (req, res) { 
     var errors = validationResult(req);
     var addBookErrors = [];
     if (Object.keys(errors['errors']).length > 0) {
         for (let i in errors['errors']) {
             addBookErrors[errors['errors'][i]['param']] = errors['errors'][i]['msg'];
         }
-        res.render('staff', { pendingBooks: defPendingBooks, yetBorrowedBooks: defYetBorrowedBooks, addBookErrors: addBookErrors, conn_err: def_conn_err });
+        if (Object.keys(addBookErrors).length == 1 && addBookErrors['isbn'] != undefined) {
+            if (req.body.isbn.slice(-1) == "X") {
+                addNewBook([req.body.bname, req.body.author, req.body.publication_date, req.body.genre, req.body.price, req.body.noOfCopies, req.body.isbn]).then(function (status) {
+                    if (status == "Success") {
+                        def_conn_err["err"] = "*book added successfully";
+                        res.redirect('/staff/addBook');
+                    } else {
+                        let conn_err = [{ "err": "Database problem, Please try again after some time." }];
+                        res.render('staff', { addBookErrors: defAddBookErrors, conn_err: conn_err });
+                    }
+                });
+            } else {
+                res.render('staff-addBook', { addBookErrors: addBookErrors, conn_err: def_conn_err });
+            }
+        } else { 
+            res.render('staff-addBook', { addBookErrors: addBookErrors, conn_err: def_conn_err });
+        }
     } else { 
         addNewBook([ req.body.bname, req.body.author, req.body.publication_date, req.body.genre, req.body.price, req.body.noOfCopies, req.body.isbn ]).then(function (status) { 
             if (status == "Success") {
                 def_conn_err["err"] = "*book added successfully";
-                res.redirect('staff');
+                res.redirect('/staff/addBook');
             } else { 
                 let conn_err = [{ "err": "Database problem, Please try again after some time." }];
-                res.render('staff', { pendingBooks: defPendingBooks, yetBorrowedBooks: defYetBorrowedBooks, addBookErrors, conn_err: conn_err });
+                res.render('staff', { addBookErrors: defAddBookErrors, conn_err: conn_err });
             }
         });  
     }

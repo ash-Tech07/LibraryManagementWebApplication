@@ -27,9 +27,9 @@ function processPendingBooks(btn, inpId) {
 
     //Toggling the disablity of submit btn
     if (noOfPendBtnSelected >= 1) {
-        document.getElementById("pendSubBtn").classList.remove("disabled");
+        document.getElementById("pendSubBtn").classList.add("enable");
     } else {
-        document.getElementById("pendSubBtn").classList.add("disabled");
+        document.getElementById("pendSubBtn").classList.remove("enable");
     }
     
 }
@@ -58,9 +58,9 @@ function processYetBorrowedBooks(btn, inpId) {
 
     //Toggling the disablity of submit btn
     if (noOfYetBorrowBtnSelected >= 1) {
-        document.getElementById("yetBorrowSubBtn").classList.remove("disabled");
+        document.getElementById("yetBorrowSubBtn").classList.add("enable");
     } else {
-        document.getElementById("yetBorrowSubBtn").classList.add("disabled");
+        document.getElementById("yetBorrowSubBtn").classList.remove("enable");
     }
 
 }

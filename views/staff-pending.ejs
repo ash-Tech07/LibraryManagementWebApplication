@@ -1,0 +1,114 @@
+<%- include('partials/header') %>
+    <link rel="stylesheet" href="/css/staff-styles.css">    
+
+    <div class="wrapper">
+        <!-- PENDING TO BE RETURNED BOOKS TABLE -->
+        <h1 class="mt-5 mb-3 ms-auto me-auto dashboard-heading">Pending Books</h1>
+        <table class="table table-striped table-hover table-bordered tables ms-auto me-auto">
+            <thead>
+                <th>S. NO</th>
+                <th>Lib-Id</th>
+                <th>Student Name</th>
+                <th>Unique Number</th>
+                <th>Book Name</th>
+                <th>Author Name</th>
+                <th>Genre</th>
+                <th>Year</th>
+                <th>ISBN</th>
+                <th>Price</th>
+                <th>Borrowed On</th>
+                <th>Action</th>
+            </thead>
+            <tbody>
+                <% if (pendingBooks) { %>
+                    <% let pageOffset = 10; %>
+                    <% let x = (tot_count[1]-1) * pageOffset;%>
+                    <% for(let isbn in pendingBooks) { %>
+                        <tr id = "<%= pendingBooks[isbn]['libid'] + ' ' + pendingBooks[isbn]['isbn'] %>">
+                            <td>
+                                <%= x+1 %>
+                            </td>
+                            <td>
+                                <%= pendingBooks[isbn]['libid'] %>
+                            </td>
+                            <td>
+                                <%= pendingBooks[isbn]['stuName'] %>
+                            </td>
+                            <td>
+                                <%= pendingBooks[isbn]['uniqueNum'] %>
+                            </td>
+                            <td>
+                                <%= pendingBooks[isbn]['name'] %>
+                            </td>
+                            <td>
+                                <%= pendingBooks[isbn]['author'] %>
+                            </td>
+                            <td>
+                                <%= pendingBooks[isbn]['genre'] %>
+                            </td>
+                            <td>
+                                <%= pendingBooks[isbn]['publication_date'].substring(0, 4) %>
+                            </td>
+                            <td>
+                                <%= pendingBooks[isbn]['isbn'] %>
+                            </td>
+                            <td>
+                                <%= "₹" + pendingBooks[isbn]['price'] %>
+                            </td>
+                            <td>
+                                <%= pendingBooks[isbn]['dateBorrowed'] %>
+                            </td>
+                            <td><button class="btn btn-sm dashboard-btn" onclick="processPendingBooks(this, 'processPendingBooksInp');">Return</button></td>
+                        </tr>
+                <% x++; } } %>
+            </tbody>
+        </table>
+
+        <div class="mt-2 ms-auto me-auto text-center">
+            <form action="/processPendingBooks" method="post">
+                <input type="text" name="pendingBooksData" id="processPendingBooksInp">
+                <button class="btn ms-auto me-auto dashboard-btn" id="pendSubBtn" type="submit">Return Books</button>
+            </form>
+        </div>
+
+
+        <% if (Object.keys(pendingBooks).length == 0) { %>
+            <div class="info text-center ms-auto me-auto mt-2 warnings">Oops! No Books Found</div>
+        <% } %>
+
+
+        <div class="page mt-5">
+            <nav>
+                <ul class="pagination justify-content-center" id="<%= tot_count[0] %>">
+                    <% if (tot_count[1] == 1) { %>
+                        <li class="page-item disabled"><a class="page-link" href="#" tabindex="-1"aria-disabled="true">Previous</a></li>
+                    <% } else { %>
+                        <li class="page-item"><a class="page-link" href="/staff/pendingBooks?page=<%= Number(tot_count[1])-1 %>">Previous</a></li>
+                    <% } %>
+
+                    <div class="pages" id="">
+                        <% if (tot_count[0] != 0) { %>
+                            <% for(let i = 1; i <= tot_count[0]; i++) { %>
+                                <% if (tot_count[1] == i) { %>
+                                    <li class="page-item active" id="pg<%= i %>"><a class="page-link" href="/staff/pendingBooks?page=<%= i %>"><%= i %></a></li>
+                                <% } else { %>
+                                    <li class="page-item" id="pg<%= i %>"><a class="page-link" href="/staff/pendingBooks?page=<%= i %>"><%= i %></a></li>
+                                <% } %>
+                        <% } } %>
+                    </div>
+                
+                    <% if (tot_count[0] == tot_count[1] || tot_count[0] == 0) { %>
+                        <li class="page-item disabled"><a class="page-link"  id="next_btn">Next</a></li>
+                    <% } else { %>
+                        <li class="page-item">
+                            <a class="page-link" id="next_btn" href="/staff/pendingBooks?page=<%= Number(tot_count[1])+1 %>">Next</a>
+                        </li>
+                    <% } %>
+                </ul>
+            </nav>
+        </div>
+    </div>
+    
+
+    <script type="text/javascript" src="/staffScript.js"></script>
+<%- include('partials/footer') %>

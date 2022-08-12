@@ -10,3 +10,14 @@ body{
     background-color: #47B5FF;
     color: #FFFFFF;
 }
+
+#processPendingBooksInp, #yetBorrowedBooksDataInp{
+    display: none;
+}
+
+#pendSubBtn, #yetBorrowSubBtn{
+    display: none;
+}
+#pendSubBtn.enable, #yetBorrowSubBtn.enable{
+    display: block;
+}
