@@ -24,7 +24,7 @@ const validateAddNewBookConfig = [  body('bname').trim().escape().isLength({ min
                                     body('author').trim().escape().isLength({ min: 3 }).withMessage('Enter a valid author name').isAlpha().withMessage('Enter a valid author name'),
                                     body('genre').trim().escape().isLength({ min: 3 }).withMessage('Enter a valid genre').isAlpha().withMessage('Enter a valid genre'),
                                     body('isbn').trim().escape().isLength({ min: 9, max: 9 }).withMessage("Enter a valid ISBN"),
-                                    body('year').trim().escape().isLength({ min: 4, max: 4 }).withMessage("Enter a valid year").isNumeric().withMessage("Enter a valid year"),
+                                    body('year').trim().escape().isLength({ min: 10, max: 10 }).withMessage("Enter a valid year"),
                                     body('price').trim().escape().isNumeric().withMessage("Enter a valid price"),
                                     body('noOfCopies').trim().escape().isNumeric().withMessage("Enter a valid number"),
                                 ];
@@ -452,15 +452,15 @@ function addNewBook(bookData) {
 }
 
 //Function to get user details
-function getUserDetails() {
+function getUserDetails(type, page) {
     return new Promise((resolve, reject) => {
         sconnect().then(function (connection) { 
-            const staffDetailsQuery = "SELECT * FROM librarymanagement.libusers WHERE userType = 'Staff' OR userType = 'Student'";
-            connection.query(staffDetailsQuery, function (err, rows) {
+            var staffDetailsQuery = "SELECT search.row_count, id, userType, firstName, lastName, email, dob, roll, dept, uniqueNum, created, libid FROM librarymanagement.libusers, (SELECT COUNT(*) as row_count FROM librarymanagement.libusers WHERE userType = ?) as search HAVING userType = ? ORDER BY id LIMIT " + ((page - 1) * pageOffset) + ", " + pageOffset;
+            connection.query(staffDetailsQuery, [type, type], function (err, rows) {
                 if (err) {
                     return reject(err);
                 }
-                resolve(rows);
+                resolve([rows, rows[0]['row_count']]);
             });
         }).catch(err => { return reject(err); });
     });
@@ -487,9 +487,9 @@ function removeData(id, type) {
         sconnect().then(function (connection) {
             let removeQuery = "";
             if (type == "user") {
-                removeQuery = "DELETE FROM librarymanagement.libusers WHERE libid = " + id;
+                removeQuery = "DELETE FROM librarymanagement.libusers WHERE libid = '" + id + "'";
             } else { 
-                removeQuery = "DELETE FROM librarymanagement.books WHERE isbn = " + id;
+                removeQuery = "DELETE FROM librarymanagement.books WHERE isbn = '" + id + "'";
             }
             connection.query(removeQuery, function (err, result) { 
                 if (err) {
@@ -502,15 +502,16 @@ function removeData(id, type) {
 }
 
 //Function to get all book data
-function getAllBookDetails() {
+function getAllBookDetails(page) {
     return new Promise(function (resolve, reject) {
         sconnect().then(function (connection) {
-            const getUserDetailsQuery = "SELECT * FROM librarymanagement.books";
+            var getUserDetailsQuery = "SELECT search.row_count, name, author, publication_date, genre, price, noOfCopies, isbn FROM librarymanagement.books, (SELECT COUNT(*) as row_count FROM librarymanagement.books) as search ORDER BY id LIMIT " + ((page - 1) * pageOffset) + ", " + pageOffset;
+
             connection.query(getUserDetailsQuery, function (err, results) {
                 if (err) {
-                    return reject(err);
+                    return reject("NIL");
                 }
-                resolve(results);
+                resolve([results, results[0]['row_count']]);
             });
         }).catch(err => reject(err));
         
@@ -582,9 +583,9 @@ app.post("/login", validateLoginConfig, function (req, res) {
                         if (rows[0]['userType'] == 'Student') {
                             res.redirect('/dashboard/borrowBooks');
                         } else if (rows[0]['userType'] == 'Staff') {
-                            res.redirect('/staff');
+                            res.redirect('/staff/pendingBooks');
                         } else {
-                            res.redirect('/admin');
+                            res.redirect('/admin/bookData');
                         }
                     }
                 }
@@ -744,7 +745,7 @@ app.post("/dashboard/borrowBooks", validateSearchConfig, function (req, res) {
 });
 
 //Selecting and update the no of copies
-app.post("/confirmBooks", function (req, res) {
+app.get("/confirmBooks", nocache, function (req, res) {
     const booksArray = req.body['booksSelected'].split(" ");
     sconnect().then(function (resS) {
         updateCopies(booksArray, 0).then(function (stat) {
@@ -754,18 +755,7 @@ app.post("/confirmBooks", function (req, res) {
                 }).catch(err4 => console.log(err4));
             }).catch(errT => console.log(errT));
         }).catch(err => console.log(err));
-}).catch(errC => console.log(errC));
-    
-});
-
-//Sending the staff homepage on get request
-app.get("/staff", nocache, function (req, res) { 
-    if (req.cookies['Staff']) {
-        res.redirect('/staff/pendingBooks');
-    } else { 
-        res.redirect('login');
-    }
-    
+    }).catch(errC => console.log(errC));  
 });
 
 app.get("/staff/pendingBooks", nocache, function (req, res) { 
@@ -796,8 +786,8 @@ app.get("/staff/yetToBeBorrowedBooks", nocache, function (req, res) {
         sconnect().then(function (resS) {
             getPendingBooks(0, resS, page).then(function (yBooksData) {
                 defYetBorrowedBooks = yBooksData[0] == "NIL" ? {} : yBooksData[0];
-
                 let tot_count = defYetBorrowedBooks.length == 0 ? [1, page] : [Math.ceil(yBooksData[1] / pageOffset), page];
+
                 if (page > tot_count[0] && tot_count[0] > 0) {
                     res.redirect('/staff/yetToBeBorrowedBooks?page=1');
                 } else {
@@ -820,63 +810,118 @@ app.get("/staff/addBook", nocache, function (req, res) {
     }
 });
 
-//Sending admin dashboard on get request
-app.get("/admin", nocache, function (req, res) {
-    if (req.cookies['Admin'] != undefined) { 
-        getUserDetails().then(function (userDetails) {
-            studentDetails = {};
-            staffDetails = {};
-            completedTransactionDetails = {};
-            possibleTransactionDetails = {};
-            pendingTransactionDetails = {};
-    
-            let j = 0;
-            let k = 0;
-            let l = 0;
-    
-            for (let i in userDetails) {
-                userDetails[i]["dob"] = new Date(userDetails[i]["dob"]).toDateString();
-                userDetails[i]["created"] = new Date(userDetails[i]["created"]).toUTCString();
-                if (userDetails[i]["userType"] == "Student") {
-                    studentDetails[j] = userDetails[i];
-                    j += 1;
-                } else {
-                    staffDetails[k] = userDetails[i];
-                    k += 1;
-                }
+app.get("/admin/bookData", nocache, function (req, res) { 
+    if (req.cookies['Admin']) {
+        let page = req.query.page == undefined ? 1 : Number(req.query.page);
+        res.page = page;
+
+        getAllBookDetails(page).then(function (bookDetails) { 
+            let defbookDetails = bookDetails[0] == "NIL" ? {} : bookDetails[0];
+            let tot_count = defbookDetails.length == 0 ? [1, page] : [Math.ceil(bookDetails[1] / pageOffset), page];
+
+            if (page > tot_count[0] && tot_count[0] > 0) {
+                res.redirect('/admin/bookData?page=1');
+            } else {
+                res.render('admin-bookData', { bookDetails: defbookDetails, tot_count: tot_count, page: [page]});
             }
-            j = 0;
-            k = 0;
-            getAllTransactions().then(function (transactions) {
-                for (let i in transactions) {
-                    transactions[i]["dateBorrowed"] = new Date(transactions[i]["dateBorrowed"]).toDateString();
-                    transactions[i]["dateReturned"] = transactions[i]["dateReturned"] != null ? new Date(transactions[i]["dateReturned"]).toDateString() : "-";
-                    transactions[i]["status"] = transactions[i]["status"] == 0 ? "In Library" : "With Student";
-                    transactions[i]["fine"] = transactions[i]["fine"] == null ? "-" : transactions[i]["fine"];
-                    transactions[i]["staffName"] = transactions[i]["staffName"] == null ? "-" : transactions[i]["staffName"];
-    
-                    if (transactions[i]["dateReturned"] != "-") {
-                        completedTransactionDetails[j] = transactions[i];
-                        j += 1;
-                    } else if ( transactions[i]["dateReturned"] == "-" && transactions[i]["status"] == "With Student" ) {
-                        pendingTransactionDetails[k] = transactions[i];
-                        k += 1;
-                    } else { 
-                        possibleTransactionDetails[l] = transactions[i];
-                        l += 1;
-                    }
-                }
-                getAllBookDetails().then(function (bookDetails) { 
-    
-                    res.render('admin', { staffDetails: staffDetails, studentDetails: studentDetails, completedTransactionDetails: completedTransactionDetails, pendingTransactionDetails: pendingTransactionDetails, possibleTransactionDetails: possibleTransactionDetails, bookDetails: bookDetails });
-                }).catch(err => console.log(err));
-            }).catch(err => console.log(err));
+
         }).catch(err => console.log(err));
-    } else {
+    } else { 
         res.redirect('/login');
     }
-    
 });
+
+app.get("/admin/studentData", nocache, function (req, res) { 
+    if (req.cookies['Admin']) {
+        let page = req.query.page == undefined ? 1 : Number(req.query.page);
+        res.page = page;
+
+        getUserDetails("Student",  page).then(function (userDetails) {
+            let defUserDetails = userDetails[0] == "NIL" ? {} : userDetails[0];
+            let tot_count = defUserDetails.length == 0 ? [1, page] : [Math.ceil(userDetails[1] / pageOffset), page];
+            console.log(tot_count, defUserDetails);
+
+            res.render('admin-userData', { userData: defUserDetails, tot_count: tot_count});
+         }).catch(err => console.log(err));
+    } else { 
+        res.redirect('/login');
+    }
+});
+
+app.get("/admin/staffData", nocache, function (req, res) { 
+    if (req.cookies['Admin']) {
+        let page = req.query.page == undefined ? 1 : Number(req.query.page);
+        res.page = page;
+
+        getUserDetails("Staff",  page).then(function (userDetails) {
+            let defUserDetails = userDetails[0] == "NIL" ? {} : userDetails[0];
+            let tot_count = defUserDetails.length == 0 ? [1, page] : [Math.ceil(userDetails[1] / pageOffset), page];
+            console.log(tot_count, defUserDetails);
+
+            res.render('admin-userData', { userData: defUserDetails, tot_count: tot_count});
+         }).catch(err => console.log(err));
+    } else { 
+        res.redirect('/login');
+    }
+});
+
+//Sending admin dashboard on get request
+// app.get("/admin", nocache, function (req, res) {
+//     if (req.cookies['Admin'] != undefined) { 
+//         getUserDetails().then(function (userDetails) {
+//             studentDetails = {};
+//             staffDetails = {};
+//             completedTransactionDetails = {};
+//             possibleTransactionDetails = {};
+//             pendingTransactionDetails = {};
+    
+//             let j = 0;
+//             let k = 0;
+//             let l = 0;
+    
+//             for (let i in userDetails) {
+//                 userDetails[i]["dob"] = new Date(userDetails[i]["dob"]).toDateString();
+//                 userDetails[i]["created"] = new Date(userDetails[i]["created"]).toUTCString();
+//                 if (userDetails[i]["userType"] == "Student") {
+//                     studentDetails[j] = userDetails[i];
+//                     j += 1;
+//                 } else {
+//                     staffDetails[k] = userDetails[i];
+//                     k += 1;
+//                 }
+//             }
+//             j = 0;
+//             k = 0;
+//             getAllTransactions().then(function (transactions) {
+//                 for (let i in transactions) {
+//                     transactions[i]["dateBorrowed"] = new Date(transactions[i]["dateBorrowed"]).toDateString();
+//                     transactions[i]["dateReturned"] = transactions[i]["dateReturned"] != null ? new Date(transactions[i]["dateReturned"]).toDateString() : "-";
+//                     transactions[i]["status"] = transactions[i]["status"] == 0 ? "In Library" : "With Student";
+//                     transactions[i]["fine"] = transactions[i]["fine"] == null ? "-" : transactions[i]["fine"];
+//                     transactions[i]["staffName"] = transactions[i]["staffName"] == null ? "-" : transactions[i]["staffName"];
+    
+//                     if (transactions[i]["dateReturned"] != "-") {
+//                         completedTransactionDetails[j] = transactions[i];
+//                         j += 1;
+//                     } else if ( transactions[i]["dateReturned"] == "-" && transactions[i]["status"] == "With Student" ) {
+//                         pendingTransactionDetails[k] = transactions[i];
+//                         k += 1;
+//                     } else { 
+//                         possibleTransactionDetails[l] = transactions[i];
+//                         l += 1;
+//                     }
+//                 }
+//                 getAllBookDetails().then(function (bookDetails) { 
+    
+//                     res.render('admin', { staffDetails: staffDetails, studentDetails: studentDetails, completedTransactionDetails: completedTransactionDetails, pendingTransactionDetails: pendingTransactionDetails, possibleTransactionDetails: possibleTransactionDetails, bookDetails: bookDetails });
+//                 }).catch(err => console.log(err));
+//             }).catch(err => console.log(err));
+//         }).catch(err => console.log(err));
+//     } else {
+//         res.redirect('/login');
+//     }
+    
+// });
 
 
 //Processing pending books in staff
@@ -919,14 +964,18 @@ app.get("/logout", function (req, res) {
 //Adding new book in staff
 app.post("/staff/addBook", validateAddNewBookConfig, function (req, res) { 
     var errors = validationResult(req);
+    
     var addBookErrors = [];
     if (Object.keys(errors['errors']).length > 0) {
         for (let i in errors['errors']) {
             addBookErrors[errors['errors'][i]['param']] = errors['errors'][i]['msg'];
         }
+        if (req.body.year.charAt(5) != "-" || req.body.year.charAt(8)) {
+            addBookErrors.push({ 'year': "Enter a valid year" });
+        }
         if (Object.keys(addBookErrors).length == 1 && addBookErrors['isbn'] != undefined) {
             if (req.body.isbn.slice(-1) == "X") {
-                addNewBook([req.body.bname, req.body.author, req.body.publication_date, req.body.genre, req.body.price, req.body.noOfCopies, req.body.isbn]).then(function (status) {
+                addNewBook([req.body.bname, req.body.author, req.body.year, req.body.genre, req.body.price, req.body.noOfCopies, req.body.isbn]).then(function (status) {
                     if (status == "Success") {
                         def_conn_err["err"] = "*book added successfully";
                         res.redirect('/staff/addBook');
@@ -942,7 +991,7 @@ app.post("/staff/addBook", validateAddNewBookConfig, function (req, res) {
             res.render('staff-addBook', { addBookErrors: addBookErrors, conn_err: def_conn_err });
         }
     } else { 
-        addNewBook([ req.body.bname, req.body.author, req.body.publication_date, req.body.genre, req.body.price, req.body.noOfCopies, req.body.isbn ]).then(function (status) { 
+        addNewBook([ req.body.bname, req.body.author, req.body.year, req.body.genre, req.body.price, req.body.noOfCopies, req.body.isbn ]).then(function (status) { 
             if (status == "Success") {
                 def_conn_err["err"] = "*book added successfully";
                 res.redirect('/staff/addBook');
@@ -966,8 +1015,8 @@ app.post('/removeData', function (req, res) {
         id = req.body.isbn;
     }
     removeData(id, type).then(function (result) { 
-        res.redirect('/admin');
-    }).catch(err => reject(err));
+        res.redirect('/admin/bookData?page='+req.query.page);
+    }).catch(err => console.log(err));
 });
 
 

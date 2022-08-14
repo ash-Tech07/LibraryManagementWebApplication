@@ -15,6 +15,7 @@ body{
     flex-direction: column;
     min-height: 100vh;
     font-family: 'Nunito Sans', sans-serif;
+    overflow-x: hidden;
 }
 
 .wrapper{
@@ -167,6 +168,37 @@ ul.nav.nav-tabs li.nav-item button.nav-link.active {
 .warnings{
   color: #47B5FF;
   font-size: 15px;
+}
+
+.page-item{
+  display: inline-block;
+}
+
+.pages{
+  max-width: 400px;
+  white-space: nowrap;
+  height: 60px;
+  overflow-y: hidden;
+  overflow-x: scroll;
+}
+
+.page{
+  margin-top: 40px;
+  margin-bottom: 100px;
+}
+
+.page .pagination .page-item .page-link{
+  background-color: #FFFFFF;
+  color: #47B5FF;
+}
+
+.page .pagination .page-item.active .page-link, .page .pagination .page-item .page-link:hover{
+  background-color: #47B5FF;
+  color: #FFFFFF;
+}
+
+.hide{
+  display: none;
 }
 
 

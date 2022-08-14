@@ -1,303 +1,298 @@
-<!doctype html>
-<html lang="en">
+<%- include('partials/header') %>
 
-<head>
-    <!-- Required meta tags -->
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
-        integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
-    <link rel="stylesheet" href="/css/styles.css">
+    <div class="wrapper">
+        <!-- ALL BOOKS DATA TABLE -->
+        <div class="cont mt-5 ms-auto me-auto text-center">
+            <h1 class="mb-3 ms-auto me-auto dashboard-heading">Complete Books Data</h1>
+            <table class="table table-striped table-hover tables">
+                <thead>
+                    <th>S. No</th>
+                    <th>ISBN</th>
+                    <th>Book Name</th>
+                    <th>Author</th>
+                    <th>Published Year</th>
+                    <th>Genre</th>
+                    <th>Price</th>
+                    <th>No of copies</th>
+                    <th>Action</th>
+                </thead>
 
-    <title>Welcome to Dashboard</title>
-</head>
+                <tbody>
 
-<body>
-    <!-- NAVBAR -->
-    <div class="navbar navbar-expand-md navbar-light sticky-top" style="background-color: #e3f2fd;">
-        <div class="container-fluid mt-2">
-            <!-- NAVBAR BRAND -->
-            <div class="navbar-brand ms-3">
-                <img class="align-text-bottom mb-1" height="40px" width="40px" src="/logo.png"
-                    alt="Anna University Logo">
-                <ul style="list-style-type:none;display:inline-block;padding:0;margin:0;">
-                    <li style="font-size:18px">Department of Information Technology</li>
-                    <li style="font-size:13px">Anna University, MIT Campus</li>
-                </ul>
+                    <% if(bookDetails) { %>
+                        <% let pageOffset = 10; %>
+                        <% let x = (tot_count[1]-1) * pageOffset;%>
+                        <% for (let i in bookDetails) {%>     
+                        <tr>
+                            <td><%= x+1 %></td>
+                            <td><%= bookDetails[i].isbn %></td>
+                            <td><%= bookDetails[i].name %></td>
+                            <td><%= bookDetails[i].author %></td>
+                            <td><%= bookDetails[i].pyblication_year.substring(0, 4) %></td>
+                            <td><%= bookDetails[i].genre %></td>
+                            <td><%= bookDetails[i].price %></td>
+                            <td><%= bookDetails[i].noOfCopies %></td>
+                            <td>
+                                <form action="/removeData" method="post" onsubmit="return confirm('Are you sure you want to remove this book?');">
+                                    <input type="text" value="<%= bookDetails[i].isbn %>" name="isbn" style="display: none;">
+                                    <button type="submit" class="btn btn-outline-danger btn-sm">Remove</button>
+                                </form>
+                            </td>
+                        </tr>
+
+                        <% } }%>
+                </tbody>
+            </table>
+
+            <% if (Object.keys(bookDetails).length == 0) { %>
+                <div class="info text-center ms-auto me-auto mt-2 warnings">Oops! No Books Found</div>
+            <% } %>
+
+            <div class="page">
+                <nav>
+                    <ul class="pagination justify-content-center" id="<%= tot_count[0] %>">
+                        <% if (tot_count[1] == 1) { %>
+                            <li class="page-item disabled"><a class="page-link" href="#" tabindex="-1"aria-disabled="true">Previous</a></li>
+                        <% } else { %>
+                            <li class="page-item"><a class="page-link" href="/dashboard/pendingBooks?page=<%= Number(tot_count[1])-1 %>">Previous</a></li>
+                        <% } %>
+    
+                        <div class="pages" id="">
+                            <% if (tot_count[0] != 0) { %>
+                                <% for(let i = 1; i <= tot_count[0]; i++) { %>
+                                    <% if (tot_count[1] == i) { %>
+                                        <li class="page-item active" id="pg<%= i %>"><a class="page-link" href="/dashboard/pendingBooks?page=<%= i %>"><%= i %></a></li>
+                                    <% } else { %>
+                                        <li class="page-item" id="pg<%= i %>"><a class="page-link" href="/dashboard/pendingBooks?page=<%= i %>"><%= i %></a></li>
+                                    <% } %>
+                            <% } } %>
+                        </div>
+                    
+                        <% if (tot_count[0] == tot_count[1] || tot_count[0] == 0) { %>
+                            <li class="page-item disabled"><a class="page-link"  id="next_btn">Next</a></li>
+                        <% } else { %>
+                            <li class="page-item">
+                                <a class="page-link" id="next_btn" href="/dashboard/pendingBooks?page=<%= Number(tot_count[1])+1 %>">Next</a>
+                            </li>
+                        <% } %>
+                    </ul>
+                </nav>
             </div>
-            <!-- NAVBAR TOGGLER -->
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarText"
-                aria-controls="navbarText" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <!-- NAVBAR LINKS -->
-            <div class="collapse navbar-collapse justify-content-end me-auto" id="navbarText">
-                <ul class="navbar-nav me-5">
-                    <li class="nav-item"> <a class="nav-link" href="/logout">LOG OUT</a></li>
-                </ul>
-            </div>
+
+        </div>
+
+        <!-- WORKING STAFFS TABLE -->
+        <div class="cont mt-5 ms-auto me-auto text-center" style="max-width: 95vw;">
+            <h1 class="mb-3 ms-auto me-auto" style="max-width: 60vw;text-align: center;">Curently Working Staffs</h1>
+            <table class="table table-striped table-hover">
+                <thead>
+                    <th>S. No</th>
+                    <th>First Name</th>
+                    <th>Last Name</th>
+                    <th>email</th>
+                    <th>DOB</th>
+                    <th>Department</th>
+                    <th>uniqueNum</th>
+                    <th>Staff ID</th>
+                    <th>Date and Time of Join</th>
+                    <th>Action</th>
+                </thead>
+
+                <tbody>
+
+                    <% if(staffDetails) { %>
+                        <% for (let i in staffDetails) {%>
+
+                        <tr>
+                            <td><%= Number(i) + 1 %></td>
+                            <td><%= staffDetails[i].firstName %></td>
+                            <td><%= staffDetails[i].lastName %></td>
+                            <td><%= staffDetails[i].email %></td>
+                            <td><%= staffDetails[i].dob %></td>
+                            <td><%= staffDetails[i].dept %></td>
+                            <td><%= staffDetails[i].uniqueNum %></td>
+                            <td><%= staffDetails[i].libid %></td>
+                            <td><%= staffDetails[i].created %></td>
+                            <td>
+                                <form action="/removeData" method="post" id="removeData" onsubmit="return confirm('Are you sure you want to remove this user?');">
+                                    <input type="text" value="<%= staffDetails[i].libid %>" name="libid" style="display: none;">
+                                    <button type="submit" class="btn btn-outline-danger btn-sm">Remove</button>
+                                </form>
+                            </td>
+                        </tr>
+
+                        <% } }%>
+
+                </tbody>
+            </table>
+
+        </div>
+
+
+        <!-- STUDENT USERS -->
+        <div class="cont mt-5 ms-auto me-auto text-center" style="max-width: 95vw;">
+            <h1 class="mb-3 ms-auto me-auto" style="max-width: 60vw;text-align: center;">Student Users</h1>
+            <table class="table table-striped table-hover">
+                <thead>
+                    <th>S. No</th>
+                    <th>First Name</th>
+                    <th>Last Name</th>
+                    <th>email</th>
+                    <th>DOB</th>
+                    <th>Department</th>
+                    <th>uniqueNum</th>
+                    <th>Student ID</th>
+                    <th>Date and Time of Join</th>
+                    <th>Action</th>
+                </thead>
+
+                <tbody>
+
+                    <% if(studentDetails) { %>
+                        <% for (let i in studentDetails) {%>
+
+                        <tr>
+                            <td><%= Number(i) + 1 %></td>
+                            <td><%= studentDetails[i].firstName %></td>
+                            <td><%= studentDetails[i].lastName %></td>
+                            <td><%= studentDetails[i].email %></td>
+                            <td><%= studentDetails[i].dob %></td>
+                            <td><%= studentDetails[i].dept %></td>
+                            <td><%= studentDetails[i].uniqueNum %></td>
+                            <td><%= studentDetails[i].libid %></td>
+                            <td><%= studentDetails[i].created %></td>
+                            <td>
+                                <form action="/removeData" method="post" id="removeData" onsubmit="return confirm('Are you sure you want to remove this user?');">
+                                    <input type="text" value="<%= studentDetails[i].libid %>" name="libid" style="display: none;">
+                                    <button type="submit" class="btn btn-outline-danger btn-sm">Remove</button>
+                                </form>
+                            </td>
+                        </tr>
+
+                        <% } }%>
+
+                </tbody>
+            </table>
+
+        </div>
+
+        <!-- COMPLETED TRANSACTIONS TABLE -->
+        <div class="cont mt-5 ms-auto me-auto text-center" style="max-width: 95vw;">
+            <h1 class="mb-3 ms-auto me-auto" style="max-width: 60vw;text-align: center;">Completed Transactions</h1>
+            <table class="table table-striped table-hover">
+                <thead>
+                    <th>S. No</th>
+                    <th>Lib-ID</th>
+                    <th>ISBN</th>
+                    <th>Status</th>
+                    <th>Staff Handled</th>
+                    <th>Date Borrowed</th>
+                    <th>Date Returned</th>
+                    <th>Fine</th>
+                </thead>
+
+                <tbody>
+
+                    <% if(completedTransactionDetails) { %>
+                        <% for (let i in completedTransactionDetails) {%>
+
+                        <tr>
+                            <td><%= Number(i) + 1 %></td>
+                            <td><%= completedTransactionDetails[i].libid %></td>
+                            <td><%= completedTransactionDetails[i].isbn %></td>
+                            <td><%= completedTransactionDetails[i].status %></td>
+                            <td><%= completedTransactionDetails[i].staffName %></td>
+                            <td><%= completedTransactionDetails[i].dateBorrowed %></td>
+                            <td><%= completedTransactionDetails[i].dateReturned %></td>
+                            <td><%= completedTransactionDetails[i].fine %></td>
+                        </tr>
+
+                        <% } }%>
+
+                </tbody>
+            </table>
+
+        </div>
+
+        <!-- COMPLETED TRANSACTIONS TABLE -->
+        <div class="cont mt-5 ms-auto me-auto text-center" style="max-width: 95vw;">
+            <h1 class="mb-3 ms-auto me-auto" style="max-width: 60vw;text-align: center;">Pending Transactions</h1>
+            <table class="table table-striped table-hover">
+                <thead>
+                    <th>S. No</th>
+                    <th>Lib-ID</th>
+                    <th>ISBN</th>
+                    <th>Status</th>
+                    <th>Staff Handled</th>
+                    <th>Date Borrowed</th>
+                    <th>Date Returned</th>
+                    <th>Fine</th>
+                </thead>
+
+                <tbody>
+
+                    <% if(pendingTransactionDetails) { %>
+                        <% for (let i in pendingTransactionDetails) {%>
+
+                        <tr>
+                            <td><%= Number(i) + 1 %></td>
+                            <td><%= pendingTransactionDetails[i].libid %></td>
+                            <td><%= pendingTransactionDetails[i].isbn %></td>
+                            <td><%= pendingTransactionDetails[i].status %></td>
+                            <td><%= pendingTransactionDetails[i].staffName %></td>
+                            <td><%= pendingTransactionDetails[i].dateBorrowed %></td>
+                            <td><%= pendingTransactionDetails[i].dateReturned %></td>
+                            <td><%= pendingTransactionDetails[i].fine %></td>
+                        </tr>
+
+                        <% } }%>
+
+                </tbody>
+            </table>
+
+        </div>
+
+
+        <!-- POSSIBLE TRANSACTIONS TABLE -->
+        <div class="cont mt-5 ms-auto me-auto text-center" style="max-width: 95vw;">
+            <h1 class="mb-3 ms-auto me-auto" style="max-width: 60vw;text-align: center;">Possible Transactions</h1>
+            <table class="table table-striped table-hover">
+                <thead>
+                    <th>S. No</th>
+                    <th>Lib-ID</th>
+                    <th>ISBN</th>
+                    <th>Status</th>
+                    <th>Staff Handled</th>
+                    <th>Date Borrowed</th>
+                    <th>Date Returned</th>
+                    <th>Fine</th>
+                </thead>
+
+                <tbody>
+
+                    <% if(possibleTransactionDetails) { %>
+                        <% for (let i in possibleTransactionDetails) {%>
+
+                        <tr>
+                            <td><%= Number(i) + 1 %></td>
+                            <td><%= possibleTransactionDetails[i].libid %></td>
+                            <td><%= possibleTransactionDetails[i].isbn %></td>
+                            <td><%= possibleTransactionDetails[i].status %></td>
+                            <td><%= possibleTransactionDetails[i].staffName %></td>
+                            <td><%= possibleTransactionDetails[i].dateBorrowed %></td>
+                            <td><%= possibleTransactionDetails[i].dateReturned %></td>
+                            <td><%= possibleTransactionDetails[i].fine %></td>
+                        </tr>
+
+                        <% } }%>
+
+                </tbody>
+            </table>
+
         </div>
     </div>
-
-    <!-- ALL BOOKS DATA TABLE -->
-    <div class="cont mt-5 ms-auto me-auto text-center" style="max-width: 95vw;">
-        <h1 class="mb-3 ms-auto me-auto" style="max-width: 60vw;text-align: center;">Complete Books Data</h1>
-        <table class="table table-striped table-hover">
-            <thead>
-                <th>S. No</th>
-                <th>ISBN</th>
-                <th>Book Name</th>
-                <th>Author</th>
-                <th>Published Year</th>
-                <th>Genre</th>
-                <th>Price</th>
-                <th>No of copies</th>
-                <th>Action</th>
-            </thead>
-
-            <tbody>
-
-                <% if(bookDetails) { %>
-                    <% for (let i in bookDetails) {%>
-
-                    <tr>
-                        <td><%= Number(i) + 1 %></td>
-                        <td><%= bookDetails[i].isbn %></td>
-                        <td><%= bookDetails[i].name %></td>
-                        <td><%= bookDetails[i].author %></td>
-                        <td><%= bookDetails[i].year %></td>
-                        <td><%= bookDetails[i].genre %></td>
-                        <td><%= bookDetails[i].price %></td>
-                        <td><%= bookDetails[i].noOfCopies %></td>
-                        <td>
-                            <form action="/removeData" method="post" onsubmit="return confirm('Are you sure you want to remove this book?');">
-                                <input type="text" value="<%= bookDetails[i].isbn %>" name="isbn" style="display: none;">
-                                <button type="submit" class="btn btn-outline-danger btn-sm">Remove</button>
-                            </form>
-                        </td>
-                    </tr>
-
-                    <% } }%>
-
-            </tbody>
-        </table>
-
-    </div>
-
-    <!-- WORKING STAFFS TABLE -->
-    <div class="cont mt-5 ms-auto me-auto text-center" style="max-width: 95vw;">
-        <h1 class="mb-3 ms-auto me-auto" style="max-width: 60vw;text-align: center;">Curently Working Staffs</h1>
-        <table class="table table-striped table-hover">
-            <thead>
-                <th>S. No</th>
-                <th>First Name</th>
-                <th>Last Name</th>
-                <th>email</th>
-                <th>DOB</th>
-                <th>Department</th>
-                <th>uniqueNum</th>
-                <th>Staff ID</th>
-                <th>Date and Time of Join</th>
-                <th>Action</th>
-            </thead>
-
-            <tbody>
-
-                <% if(staffDetails) { %>
-                    <% for (let i in staffDetails) {%>
-
-                    <tr>
-                        <td><%= Number(i) + 1 %></td>
-                        <td><%= staffDetails[i].firstName %></td>
-                        <td><%= staffDetails[i].lastName %></td>
-                        <td><%= staffDetails[i].email %></td>
-                        <td><%= staffDetails[i].dob %></td>
-                        <td><%= staffDetails[i].dept %></td>
-                        <td><%= staffDetails[i].uniqueNum %></td>
-                        <td><%= staffDetails[i].libid %></td>
-                        <td><%= staffDetails[i].created %></td>
-                        <td>
-                            <form action="/removeData" method="post" id="removeData" onsubmit="return confirm('Are you sure you want to remove this user?');">
-                                <input type="text" value="<%= staffDetails[i].libid %>" name="libid" style="display: none;">
-                                <button type="submit" class="btn btn-outline-danger btn-sm">Remove</button>
-                            </form>
-                        </td>
-                    </tr>
-
-                    <% } }%>
-
-            </tbody>
-        </table>
-
-    </div>
-
-
-    <!-- STUDENT USERS -->
-    <div class="cont mt-5 ms-auto me-auto text-center" style="max-width: 95vw;">
-        <h1 class="mb-3 ms-auto me-auto" style="max-width: 60vw;text-align: center;">Student Users</h1>
-        <table class="table table-striped table-hover">
-            <thead>
-                <th>S. No</th>
-                <th>First Name</th>
-                <th>Last Name</th>
-                <th>email</th>
-                <th>DOB</th>
-                <th>Department</th>
-                <th>uniqueNum</th>
-                <th>Student ID</th>
-                <th>Date and Time of Join</th>
-                <th>Action</th>
-            </thead>
-
-            <tbody>
-
-                <% if(studentDetails) { %>
-                    <% for (let i in studentDetails) {%>
-
-                    <tr>
-                        <td><%= Number(i) + 1 %></td>
-                        <td><%= studentDetails[i].firstName %></td>
-                        <td><%= studentDetails[i].lastName %></td>
-                        <td><%= studentDetails[i].email %></td>
-                        <td><%= studentDetails[i].dob %></td>
-                        <td><%= studentDetails[i].dept %></td>
-                        <td><%= studentDetails[i].uniqueNum %></td>
-                        <td><%= studentDetails[i].libid %></td>
-                        <td><%= studentDetails[i].created %></td>
-                        <td>
-                            <form action="/removeData" method="post" id="removeData" onsubmit="return confirm('Are you sure you want to remove this user?');">
-                                <input type="text" value="<%= studentDetails[i].libid %>" name="libid" style="display: none;">
-                                <button type="submit" class="btn btn-outline-danger btn-sm">Remove</button>
-                            </form>
-                        </td>
-                    </tr>
-
-                    <% } }%>
-
-            </tbody>
-        </table>
-
-    </div>
-
-    <!-- COMPLETED TRANSACTIONS TABLE -->
-    <div class="cont mt-5 ms-auto me-auto text-center" style="max-width: 95vw;">
-        <h1 class="mb-3 ms-auto me-auto" style="max-width: 60vw;text-align: center;">Completed Transactions</h1>
-        <table class="table table-striped table-hover">
-            <thead>
-                <th>S. No</th>
-                <th>Lib-ID</th>
-                <th>ISBN</th>
-                <th>Status</th>
-                <th>Staff Handled</th>
-                <th>Date Borrowed</th>
-                <th>Date Returned</th>
-                <th>Fine</th>
-            </thead>
-
-            <tbody>
-
-                <% if(completedTransactionDetails) { %>
-                    <% for (let i in completedTransactionDetails) {%>
-
-                    <tr>
-                        <td><%= Number(i) + 1 %></td>
-                        <td><%= completedTransactionDetails[i].libid %></td>
-                        <td><%= completedTransactionDetails[i].isbn %></td>
-                        <td><%= completedTransactionDetails[i].status %></td>
-                        <td><%= completedTransactionDetails[i].staffName %></td>
-                        <td><%= completedTransactionDetails[i].dateBorrowed %></td>
-                        <td><%= completedTransactionDetails[i].dateReturned %></td>
-                        <td><%= completedTransactionDetails[i].fine %></td>
-                    </tr>
-
-                    <% } }%>
-
-            </tbody>
-        </table>
-
-    </div>
-
-    <!-- COMPLETED TRANSACTIONS TABLE -->
-    <div class="cont mt-5 ms-auto me-auto text-center" style="max-width: 95vw;">
-        <h1 class="mb-3 ms-auto me-auto" style="max-width: 60vw;text-align: center;">Pending Transactions</h1>
-        <table class="table table-striped table-hover">
-            <thead>
-                <th>S. No</th>
-                <th>Lib-ID</th>
-                <th>ISBN</th>
-                <th>Status</th>
-                <th>Staff Handled</th>
-                <th>Date Borrowed</th>
-                <th>Date Returned</th>
-                <th>Fine</th>
-            </thead>
-
-            <tbody>
-
-                <% if(pendingTransactionDetails) { %>
-                    <% for (let i in pendingTransactionDetails) {%>
-
-                    <tr>
-                        <td><%= Number(i) + 1 %></td>
-                        <td><%= pendingTransactionDetails[i].libid %></td>
-                        <td><%= pendingTransactionDetails[i].isbn %></td>
-                        <td><%= pendingTransactionDetails[i].status %></td>
-                        <td><%= pendingTransactionDetails[i].staffName %></td>
-                        <td><%= pendingTransactionDetails[i].dateBorrowed %></td>
-                        <td><%= pendingTransactionDetails[i].dateReturned %></td>
-                        <td><%= pendingTransactionDetails[i].fine %></td>
-                    </tr>
-
-                    <% } }%>
-
-            </tbody>
-        </table>
-
-    </div>
-
-
-    <!-- POSSIBLE TRANSACTIONS TABLE -->
-    <div class="cont mt-5 ms-auto me-auto text-center" style="max-width: 95vw;">
-        <h1 class="mb-3 ms-auto me-auto" style="max-width: 60vw;text-align: center;">Possible Transactions</h1>
-        <table class="table table-striped table-hover">
-            <thead>
-                <th>S. No</th>
-                <th>Lib-ID</th>
-                <th>ISBN</th>
-                <th>Status</th>
-                <th>Staff Handled</th>
-                <th>Date Borrowed</th>
-                <th>Date Returned</th>
-                <th>Fine</th>
-            </thead>
-
-            <tbody>
-
-                <% if(possibleTransactionDetails) { %>
-                    <% for (let i in possibleTransactionDetails) {%>
-
-                    <tr>
-                        <td><%= Number(i) + 1 %></td>
-                        <td><%= possibleTransactionDetails[i].libid %></td>
-                        <td><%= possibleTransactionDetails[i].isbn %></td>
-                        <td><%= possibleTransactionDetails[i].status %></td>
-                        <td><%= possibleTransactionDetails[i].staffName %></td>
-                        <td><%= possibleTransactionDetails[i].dateBorrowed %></td>
-                        <td><%= possibleTransactionDetails[i].dateReturned %></td>
-                        <td><%= possibleTransactionDetails[i].fine %></td>
-                    </tr>
-
-                    <% } }%>
-
-            </tbody>
-        </table>
-
-    </div>
-
-
+    
 
     <script type="text/javascript" src="adminScript.js"></script>
-</body>
-</html>>
+<%- include('partials/footer') %>

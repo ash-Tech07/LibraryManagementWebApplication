@@ -21,7 +21,7 @@ body{
     margin-top: 100px;
 }
 
-.page{
+/* .page{
     margin-top: 40px;
     margin-bottom: 100px;
 }
@@ -34,13 +34,13 @@ body{
 .page .pagination .page-item.active .page-link, .page .pagination .page-item .page-link:hover{
     background-color: #47B5FF;
     color: #FFFFFF;
-}
+} */
 
 #lend_btn{
     display: none;
 }
 
-.page-item{
+/* .page-item{
     display: inline-block;
 }
 
@@ -50,7 +50,7 @@ body{
     height: 60px;
     overflow-y: hidden;
     overflow-x: scroll;
-}
+} */
 
 .dashboard-warning{
     max-width: 15vw; 

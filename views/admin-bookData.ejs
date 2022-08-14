@@ -1,0 +1,87 @@
+<%- include('partials/header') %>
+
+
+    <div class="wrapper">
+        <!-- ALL BOOKS DATA TABLE -->
+        <div class="cont mt-5 ms-auto me-auto text-center">
+            <h1 class="mb-3 ms-auto me-auto dashboard-heading">Complete Books Data</h1>
+            <table class="table table-striped table-hover tables ms-auto me-auto">
+                <thead>
+                    <th>S. No</th>
+                    <th>ISBN</th>
+                    <th>Book Name</th>
+                    <th>Author</th>
+                    <th>Published Year</th>
+                    <th>Genre</th>
+                    <th>Price</th>
+                    <th>No of copies</th>
+                    <th>Action</th>
+                </thead>
+
+                <tbody>
+
+                    <% if(bookDetails) { %>
+                        <% let pageOffset = 10; %>
+                        <% let x = (tot_count[1]-1) * pageOffset;%>
+                        <% for (let i in bookDetails) {%>     
+                        <tr>
+                            <td><%= x+1 %></td>
+                            <td><%= bookDetails[i].isbn %></td>
+                            <td><%= bookDetails[i].name %></td>
+                            <td><%= bookDetails[i].author %></td>
+                            <td class="text-center"><%= bookDetails[i].publication_date.substring(0, 4) %></td>
+                            <td class="text-center"><%= bookDetails[i].genre %></td>
+                            <td class="text-center"><%= bookDetails[i].price %></td>
+                            <td class="text-center"><%= bookDetails[i].noOfCopies %></td>
+                            <td>
+                                <form action="/removeData?page=<%=page[0]%>" method="post" onsubmit="return confirm('Are you sure you want to remove this book?');">
+                                    <input type="text" value="<%= bookDetails[i].isbn %>" name="isbn" class="hide">
+                                    <button type="submit" class="btn btn-outline-danger btn-sm">Remove</button>
+                                </form>
+                            </td>
+                        </tr>
+
+                        <% x++;} }%>
+                </tbody>
+            </table>
+
+            <% if (Object.keys(bookDetails).length == 0) { %>
+                <div class="info text-center ms-auto me-auto mt-2 warnings">Oops! No Books Found</div>
+            <% } %>
+
+            <div class="page">
+                <nav>
+                    <ul class="pagination justify-content-center" id="<%= tot_count[0] %>">
+                        <% if (tot_count[1] == 1) { %>
+                            <li class="page-item disabled"><a class="page-link" href="#" tabindex="-1"aria-disabled="true">Previous</a></li>
+                        <% } else { %>
+                            <li class="page-item"><a class="page-link" href="/admin/bookData?page=<%= Number(tot_count[1])-1 %>">Previous</a></li>
+                        <% } %>
+    
+                        <div class="pages" id="">
+                            <% if (tot_count[0] != 0) { %>
+                                <% for(let i = 1; i <= tot_count[0]; i++) { %>
+                                    <% if (tot_count[1] == i) { %>
+                                        <li class="page-item active" id="pg<%= i %>"><a class="page-link" href="/admin/bookData?page=<%= i %>"><%= i %></a></li>
+                                    <% } else { %>
+                                        <li class="page-item" id="pg<%= i %>"><a class="page-link" href="/admin/bookData?page=<%= i %>"><%= i %></a></li>
+                                    <% } %>
+                            <% } } %>
+                        </div>
+                    
+                        <% if (tot_count[0] == tot_count[1] || tot_count[0] == 0) { %>
+                            <li class="page-item disabled"><a class="page-link"  id="next_btn">Next</a></li>
+                        <% } else { %>
+                            <li class="page-item">
+                                <a class="page-link" id="next_btn" href="/admin/bookData?page=<%= Number(tot_count[1])+1 %>">Next</a>
+                            </li>
+                        <% } %>
+                    </ul>
+                </nav>
+            </div>
+
+        </div>
+    </div>
+
+
+<%- include('partials/footer') %>

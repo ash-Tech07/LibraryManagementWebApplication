@@ -45,16 +45,16 @@
                         <tr id="<%= searchData[data]['isbn'] %>A">
                             <td><%= x+1 %></td>
                             <td><%= searchData[data]['name'] %></td>
-                            <td><%= searchData[data]['author'] %></td>
-                            <td><%= searchData[data]['publication_date'].substring(0, 4) %></td>
-                            <td style="text-align: center;"><%= searchData[data]['genre'] %></td>
-                            <td><%= "₹" + searchData[data]['price'] %></td>
+                            <td class="text-center"><%= searchData[data]['author'] %></td>
+                            <td class="text-center"><%= searchData[data]['publication_date'].substring(0, 4) %></td>
+                            <td class="text-center"><%= searchData[data]['genre'] %></td>
+                            <td class="text-center"><%= "₹" + searchData[data]['price'] %></td>
                             <td><%= searchData[data]['isbn'] %></td>
                             <% if (searchData[data]['noOfCopies'] >= 1 ) { %>
-                                <td style="text-align: center;">Yes</td>
+                                <td class="text-center">Yes</td>
                                 <td><button class="btn btn-outline-secondary" id="<%= searchData[data]['isbn'] %>" type="button" onclick="addBook(this.id)">Lend</button></td>
                             <% } else { %>
-                                <td style="text-align: center;">No</td>
+                                <td class="text-center">No</td>
                                 <td><button class="btn btn-outline-secondary" type="button" disabled>Lend</button></td>
                             <% } %>
                         </tr>

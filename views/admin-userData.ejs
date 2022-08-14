@@ -1,0 +1,94 @@
+
+<%- include('partials/header') %>
+
+
+<div class="wrapper">
+    
+    <!-- USER DATA TABLE -->
+    <div class="cont mt-5 ms-auto me-auto text-center">
+        <h1 class="mb-3 ms-auto me-auto dashboard-heading">Staff Data</h1>
+        <table class="table table-striped table-hover tables ms-auto me-auto">
+            <thead>
+                <th>S. No</th>
+                <th>First Name</th>
+                <th>Last Name</th>
+                <th>Email</th>
+                <th>DOB</th>
+                <th>Roll</th>
+                <th>Department</th>
+                <th>Unique Number</th>
+                <th>Created</th>
+                <th>Lib-Id</th>
+                <th>Action</th>
+            </thead>
+
+            <tbody>
+
+                <% if(userData) { %>
+                    <% let pageOffset = 10; %>
+                    <% let x = (tot_count[1]-1) * pageOffset;%>
+                    <% for (let i in userData) {%>     
+                    <tr>
+                        <td><%= x+1 %></td>
+                        <td><%= userData[i].firstName %></td>
+                        <td><%= userData[i].lastName %></td>
+                        <td class="text-center"><%= userData[i].email %></td>
+                        <td class="text-center"><%= userData[i].dob %></td>
+                        <td class="text-center"><%= userData[i].roll %></td>
+                        <td class="text-center"><%= userData[i].dept %></td>
+                        <td class="text-center"><%= userData[i].uniqueNum %></td>
+                        <td class="text-center"><%= userData[i].created %></td>
+                        <td class="text-center"><%= userData[i].libid %></td>
+                        <td>
+                            <form action="/removeData?page=<%=tot_count[1]%>" method="post" onsubmit="return confirm('Are you sure you want to remove this book?');">
+                                <input type="text" value="<%= userData[i].libid %>" name="isbn" class="hide">
+                                <button type="submit" class="btn btn-outline-danger btn-sm">Remove</button>
+                            </form>
+                        </td>
+                    </tr>
+
+                    <% x++;} }%>
+            </tbody>
+        </table>
+
+        <% if (Object.keys(userData).length == 0) { %>
+            <div class="info text-center ms-auto me-auto mt-2 warnings">Oops! No Books Found</div>
+        <% } %>
+
+        <div class="page">
+            <nav>
+                <ul class="pagination justify-content-center" id="<%= tot_count[0] %>">
+                    <% if (tot_count[1] == 1) { %>
+                        <li class="page-item disabled"><a class="page-link" href="#" tabindex="-1"aria-disabled="true">Previous</a></li>
+                    <% } else { %>
+                        <li class="page-item"><a class="page-link" href="/admin/userData?page=<%= Number(tot_count[1])-1 %>">Previous</a></li>
+                    <% } %>
+
+                    <div class="pages" id="">
+                        <% if (tot_count[0] != 0) { %>
+                            <% for(let i = 1; i <= tot_count[0]; i++) { %>
+                                <% if (tot_count[1] == i) { %>
+                                    <li class="page-item active" id="pg<%= i %>"><a class="page-link" href="/admin/userData?page=<%= i %>"><%= i %></a></li>
+                                <% } else { %>
+                                    <li class="page-item" id="pg<%= i %>"><a class="page-link" href="/admin/userData?page=<%= i %>"><%= i %></a></li>
+                                <% } %>
+                        <% } } %>
+                    </div>
+                
+                    <% if (tot_count[0] == tot_count[1] || tot_count[0] == 0) { %>
+                        <li class="page-item disabled"><a class="page-link"  id="next_btn">Next</a></li>
+                    <% } else { %>
+                        <li class="page-item">
+                            <a class="page-link" id="next_btn" href="/admin/userData?page=<%= Number(tot_count[1])+1 %>">Next</a>
+                        </li>
+                    <% } %>
+                </ul>
+            </nav>
+        </div>
+
+    </div>
+
+</div>
+
+
+<%- include('partials/footer') %>

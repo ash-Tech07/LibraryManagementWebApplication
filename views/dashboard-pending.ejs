@@ -26,10 +26,10 @@
                             <td><%= currBooksData[isbn]['name'] %></td>
                             <td><%= currBooksData[isbn]['author'] %></td>
                             <td><%= isbn %></td>
-                            <td><%= currBooksData[isbn]['publication_date'].substring(0, 4) %></td>
-                            <td><%= currBooksData[isbn]['genre'] %></td>
+                            <td class="text-center"><%= currBooksData[isbn]['publication_date'].substring(0, 4) %></td>
+                            <td class="text-center"><%= currBooksData[isbn]['genre'] %></td>
                             <td><%= currBooksData[isbn]['dateBorrowed'] %></td>
-                            <td><%= "₹" + currBooksData[isbn]['price'] %></td>    
+                            <td class="text-center"><%= "₹" + currBooksData[isbn]['price'] %></td>    
                         </tr>
                 <% x++; } } %>
             </tbody>

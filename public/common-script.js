@@ -73,5 +73,34 @@ else if (window.location.href.includes("addBook") && window.location.href.includ
     document.getElementById("main-nav-link2").href = "/staff/yetToBeBorrowedBooks";
     document.getElementById("main-nav-link3").textContent = "LOG OUT";
     document.getElementById("main-nav-link3").href = "/logout";
-
+}
+else if (window.location.href.includes("confirmBooks")) {
+    document.getElementById("main-nav-link1").textContent = "DASHBOARD";
+    document.getElementById("main-nav-link1").href = "/dashboard";
+    document.getElementById("main-nav-link2").textContent = "LOG OUT";
+    document.getElementById("main-nav-link2").href = "/logout";
+}
+else if (window.location.href.includes("bookData") && window.location.href.includes("admin")) {
+    document.getElementById("main-nav-link1").textContent = "USER DATA";
+    document.getElementById("main-nav-link1").href = "/admin/userData";
+    document.getElementById("main-nav-link2").textContent = "TRANSACTION DATA";
+    document.getElementById("main-nav-link2").href = "/admin/transactionData";
+    document.getElementById("main-nav-link3").textContent = "LOG OUT";
+    document.getElementById("main-nav-link3").href = "/logout";
+}
+else if (window.location.href.includes("studentData") && window.location.href.includes("admin")) {
+    document.getElementById("main-nav-link1").textContent = "STAFF DATA";
+    document.getElementById("main-nav-link1").href = "/admin/staffData";
+    document.getElementById("main-nav-link2").textContent = "TRANSACTION DATA";
+    document.getElementById("main-nav-link2").href = "/admin/transactionData";
+    document.getElementById("main-nav-link3").textContent = "LOG OUT";
+    document.getElementById("main-nav-link3").href = "/logout";
+}
+else if (window.location.href.includes("staffData") && window.location.href.includes("admin")) {
+    document.getElementById("main-nav-link1").textContent = "STUDENT DATA";
+    document.getElementById("main-nav-link1").href = "/admin/studentData";
+    document.getElementById("main-nav-link2").textContent = "TRANSACTION DATA";
+    document.getElementById("main-nav-link2").href = "/admin/transactionData";
+    document.getElementById("main-nav-link3").textContent = "LOG OUT";
+    document.getElementById("main-nav-link3").href = "/logout";
 }
