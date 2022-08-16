@@ -4,44 +4,40 @@
 
 <div class="wrapper">
     
-    <!-- USER DATA TABLE -->
+    <!-- TRANSACTIONS DATA TABLE -->
     <div class="cont mt-5 ms-auto me-auto text-center">
-        <h1 class="mb-3 ms-auto me-auto dashboard-heading" id="userDataHeading"></h1>
+        <h1 class="mb-3 ms-auto me-auto dashboard-heading">Transaction Data</h1>
         <table class="table table-striped table-hover tables ms-auto me-auto">
             <thead>
                 <th>S. No</th>
-                <th>First Name</th>
-                <th>Last Name</th>
-                <th>Email</th>
-                <th>DOB</th>
-                <th>Roll</th>
-                <th>Department</th>
-                <th>Unique Number</th>
-                <th>Created</th>
-                <th>Lib-Id</th>
+                <th>Lib-ID</th>
+                <th>Isbn</th>
+                <th>Status</th>
+                <th>StaffName</th>
+                <th>Date Borrowed</th>
+                <th>Date Returned</th>
+                <th>Fine</th>
                 <th>Action</th>
             </thead>
 
             <tbody>
 
-                <% if(userData) { %>
+                <% if(deftransactionsDetails) { %>
                     <% let pageOffset = 10; %>
                     <% let x = (tot_count[1]-1) * pageOffset;%>
-                    <% for (let i in userData) {%>     
+                    <% for (let i in deftransactionsDetails) {%>     
                     <tr>
-                        <td><%= x+1 %></td>
-                        <td><%= userData[i].firstName %></td>
-                        <td><%= userData[i].lastName %></td>
-                        <td class="text-center"><%= userData[i].email %></td>
-                        <td class="text-center"><%= userData[i].dob %></td>
-                        <td class="text-center"><%= userData[i].roll %></td>
-                        <td class="text-center"><%= userData[i].dept %></td>
-                        <td class="text-center"><%= userData[i].uniqueNum %></td>
-                        <td class="text-center"><%= userData[i].created %></td>
-                        <td class="text-center"><%= userData[i].libid %></td>
-                        <td>
+                        <td class="text-center"><%= x+1 %></td>
+                        <td class="text-center"><%= deftransactionsDetails[i].libid %></td>
+                        <td class="text-center"><%= deftransactionsDetails[i].isbn %></td>
+                        <td class="text-center"><%= deftransactionsDetails[i].status %></td>
+                        <td class="text-center"><%= deftransactionsDetails[i].staffName %></td>
+                        <td class="text-center"><%= deftransactionsDetails[i].dateBorrowed %></td>
+                        <td class="text-center"><%= deftransactionsDetails[i].dateReturned %></td>
+                        <td class="text-center"><%= deftransactionsDetails[i].fine %></td>
+                        <td class="text-center">
                             <form action="/removeData?page=<%=tot_count[1]%>" method="post" onsubmit="return confirm('Are you sure you want to remove this book?');">
-                                <input type="text" value="<%= userData[i].libid %>" name="isbn" class="hide">
+                                <input type="text" value="<%= deftransactionsDetails[i].libid %>" name="isbn" class="hide">
                                 <button type="submit" class="btn btn-outline-danger btn-sm">Remove</button>
                             </form>
                         </td>
@@ -51,7 +47,7 @@
             </tbody>
         </table>
 
-        <% if (Object.keys(userData).length == 0) { %>
+        <% if (Object.keys(deftransactionsDetails).length == 0) { %>
             <div class="info text-center ms-auto me-auto mt-2 warnings">Oops! No Books Found</div>
         <% } %>
 

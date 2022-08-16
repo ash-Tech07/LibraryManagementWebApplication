@@ -467,15 +467,16 @@ function getUserDetails(type, page) {
 }
 
 //Function to get all transaction details
-function getAllTransactions() { 
+function getAllTransactions(page) { 
     return new Promise(function (resolve, reject) { 
         sconnect().then(function (connection) { 
-            const transactionQuery = "SELECT * FROM librarymanagement.booktransaction";
+            const transactionQuery = "SELECT search.row_count, id, isbn, libid, status, staffName, dateBorrowed, dateReturned, fine FROM librarymanagement.booktransaction, (SELECT COUNT(*) as row_count FROM librarymanagement.booktransaction) as search ORDER BY id LIMIT " + ((page - 1) * pageOffset) + ", " + pageOffset;
+            
             connection.query(transactionQuery, function (err, rows) {
                 if (err) {
                     return reject(err);
                 }
-                resolve(rows);
+                resolve([rows, rows[0]['row_count']]);
             });
         }).catch(err => console.log(err));
     });
@@ -511,7 +512,11 @@ function getAllBookDetails(page) {
                 if (err) {
                     return reject("NIL");
                 }
-                resolve([results, results[0]['row_count']]);
+                if (Object.keys(results).length > 0) {
+                    resolve([results, results[0]['row_count']]);
+                } else { 
+                    resolve(["NIL", 0]);
+                }
             });
         }).catch(err => reject(err));
         
@@ -813,13 +818,11 @@ app.get("/staff/addBook", nocache, function (req, res) {
 app.get("/admin/bookData", nocache, function (req, res) { 
     if (req.cookies['Admin']) {
         let page = req.query.page == undefined ? 1 : Number(req.query.page);
-        res.page = page;
 
         getAllBookDetails(page).then(function (bookDetails) { 
             let defbookDetails = bookDetails[0] == "NIL" ? {} : bookDetails[0];
-            let tot_count = defbookDetails.length == 0 ? [1, page] : [Math.ceil(bookDetails[1] / pageOffset), page];
-
-            if (page > tot_count[0] && tot_count[0] > 0) {
+            let tot_count = Object.keys(defbookDetails).length == 0 ? [1, page] : [Math.ceil(bookDetails[1] / pageOffset), page];
+            if (page > tot_count[0] && tot_count[0] > 0){
                 res.redirect('/admin/bookData?page=1');
             } else {
                 res.render('admin-bookData', { bookDetails: defbookDetails, tot_count: tot_count, page: [page]});
@@ -834,14 +837,17 @@ app.get("/admin/bookData", nocache, function (req, res) {
 app.get("/admin/studentData", nocache, function (req, res) { 
     if (req.cookies['Admin']) {
         let page = req.query.page == undefined ? 1 : Number(req.query.page);
-        res.page = page;
 
         getUserDetails("Student",  page).then(function (userDetails) {
             let defUserDetails = userDetails[0] == "NIL" ? {} : userDetails[0];
             let tot_count = defUserDetails.length == 0 ? [1, page] : [Math.ceil(userDetails[1] / pageOffset), page];
-            console.log(tot_count, defUserDetails);
 
-            res.render('admin-userData', { userData: defUserDetails, tot_count: tot_count});
+            if (page > tot_count[0]  && tot_count[0] > 0) {
+                res.redirect('/admin/studentData?page=' + tot_count[0]);
+            } else {
+                res.render('admin-userData', { userData: defUserDetails, tot_count: tot_count});
+            }
+
          }).catch(err => console.log(err));
     } else { 
         res.redirect('/login');
@@ -851,12 +857,10 @@ app.get("/admin/studentData", nocache, function (req, res) {
 app.get("/admin/staffData", nocache, function (req, res) { 
     if (req.cookies['Admin']) {
         let page = req.query.page == undefined ? 1 : Number(req.query.page);
-        res.page = page;
 
         getUserDetails("Staff",  page).then(function (userDetails) {
             let defUserDetails = userDetails[0] == "NIL" ? {} : userDetails[0];
             let tot_count = defUserDetails.length == 0 ? [1, page] : [Math.ceil(userDetails[1] / pageOffset), page];
-            console.log(tot_count, defUserDetails);
 
             res.render('admin-userData', { userData: defUserDetails, tot_count: tot_count});
          }).catch(err => console.log(err));
@@ -865,64 +869,29 @@ app.get("/admin/staffData", nocache, function (req, res) {
     }
 });
 
-//Sending admin dashboard on get request
-// app.get("/admin", nocache, function (req, res) {
-//     if (req.cookies['Admin'] != undefined) { 
-//         getUserDetails().then(function (userDetails) {
-//             studentDetails = {};
-//             staffDetails = {};
-//             completedTransactionDetails = {};
-//             possibleTransactionDetails = {};
-//             pendingTransactionDetails = {};
-    
-//             let j = 0;
-//             let k = 0;
-//             let l = 0;
-    
-//             for (let i in userDetails) {
-//                 userDetails[i]["dob"] = new Date(userDetails[i]["dob"]).toDateString();
-//                 userDetails[i]["created"] = new Date(userDetails[i]["created"]).toUTCString();
-//                 if (userDetails[i]["userType"] == "Student") {
-//                     studentDetails[j] = userDetails[i];
-//                     j += 1;
-//                 } else {
-//                     staffDetails[k] = userDetails[i];
-//                     k += 1;
-//                 }
-//             }
-//             j = 0;
-//             k = 0;
-//             getAllTransactions().then(function (transactions) {
-//                 for (let i in transactions) {
-//                     transactions[i]["dateBorrowed"] = new Date(transactions[i]["dateBorrowed"]).toDateString();
-//                     transactions[i]["dateReturned"] = transactions[i]["dateReturned"] != null ? new Date(transactions[i]["dateReturned"]).toDateString() : "-";
-//                     transactions[i]["status"] = transactions[i]["status"] == 0 ? "In Library" : "With Student";
-//                     transactions[i]["fine"] = transactions[i]["fine"] == null ? "-" : transactions[i]["fine"];
-//                     transactions[i]["staffName"] = transactions[i]["staffName"] == null ? "-" : transactions[i]["staffName"];
-    
-//                     if (transactions[i]["dateReturned"] != "-") {
-//                         completedTransactionDetails[j] = transactions[i];
-//                         j += 1;
-//                     } else if ( transactions[i]["dateReturned"] == "-" && transactions[i]["status"] == "With Student" ) {
-//                         pendingTransactionDetails[k] = transactions[i];
-//                         k += 1;
-//                     } else { 
-//                         possibleTransactionDetails[l] = transactions[i];
-//                         l += 1;
-//                     }
-//                 }
-//                 getAllBookDetails().then(function (bookDetails) { 
-    
-//                     res.render('admin', { staffDetails: staffDetails, studentDetails: studentDetails, completedTransactionDetails: completedTransactionDetails, pendingTransactionDetails: pendingTransactionDetails, possibleTransactionDetails: possibleTransactionDetails, bookDetails: bookDetails });
-//                 }).catch(err => console.log(err));
-//             }).catch(err => console.log(err));
-//         }).catch(err => console.log(err));
-//     } else {
-//         res.redirect('/login');
-//     }
-    
-// });
+app.get("/admin/transactionData", nocache, function (req, res) { 
+    if (req.cookies['Admin']) {
+        let page = req.query.page == undefined ? 1 : Number(req.query.page);
 
+        getAllTransactions(page).then(function (transactions) {
+            let deftransactionsDetails = transactions[0] == "NIL" ? {} : transactions[0];
+            let tot_count = deftransactionsDetails.length == 0 ? [1, page] : [Math.ceil(transactions[1] / pageOffset), page];
+
+            for (let i in deftransactionsDetails) {
+                deftransactionsDetails[i]["dateBorrowed"] = new Date(deftransactionsDetails[i]["dateBorrowed"]).toDateString();
+                deftransactionsDetails[i]["dateReturned"] = deftransactionsDetails[i]["dateReturned"] != null ? new Date(deftransactionsDetails[i]["dateReturned"]).toDateString() : "-";
+                deftransactionsDetails[i]["status"] = deftransactionsDetails[i]["status"] == 0 ? "In Library" : "With Student";
+                deftransactionsDetails[i]["fine"] = deftransactionsDetails[i]["fine"] == null ? "-" : deftransactionsDetails[i]["fine"];
+                deftransactionsDetails[i]["staffName"] = deftransactionsDetails[i]["staffName"] == null ? "-" : deftransactionsDetails[i]["staffName"];  
+            }
+
+            res.render('admin-transaction', { deftransactionsDetails: deftransactionsDetails, tot_count: tot_count});
+            
+        }).catch(err => console.log(err));
+    } else { 
+        res.redirect('/login');
+    }
+});
 
 //Processing pending books in staff
 app.post("/processPendingBooks", function (req, res) { 
