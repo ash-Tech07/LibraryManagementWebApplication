@@ -1,6 +1,6 @@
 // Importing all required node modules
 require('dotenv').config({
-    path: __dirname + "./.env"
+    path: __dirname + "/.env"
 });
 const express = require("express");
 const bodyParser = require("body-parser");
@@ -22,7 +22,6 @@ const db_config_remote = {
     database: process.env.db,
     port: process.env.db_port
 };
-console.log(db_config_remote);
 const validateLoginConfig = [ body('libid').trim().isLength({min: 4}).withMessage("Enter a valid Lib-Id").isNumeric().withMessage("Enter a valid Lib-Id") ];
 const validateSignUpConfig = [  body('fname').trim().escape().isLength({min:3}).withMessage('Enter a valid first name').isAlpha().withMessage('Enter a valid first name'),
                                 body('lname').trim().escape().isLength({min:0}).withMessage('Enter a valid last name').isAlpha().withMessage('Enter a valid last name'),
@@ -247,7 +246,7 @@ function getPendingBooks(status, connection, page) {
                         newBookData[bookData[i]['isbn']] = bookData[i];
                     }
 
-                    getUserDetails(libidArr.join(" "), connection).then(function (userData) {
+                    getUserDetails1(libidArr.join(" "), connection).then(function (userData) {
                         var finalUserData = {};
                         for (let i in userData) {
                             finalUserData[userData[i]['libid']] = userData[i];
@@ -274,7 +273,7 @@ function getPendingBooks(status, connection, page) {
 }
 
 //Function to get details about student users
-function getUserDetails(libids, connection) { 
+function getUserDetails1(libids, connection) { 
     return new Promise(function (resolve, reject) {
         if (libids.length == 0) {
             resolve("NIL");
