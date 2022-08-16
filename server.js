@@ -1,6 +1,6 @@
 // Importing all required node modules
 require('dotenv').config({
-    path: __dirname + "/.env"
+    path: __dirname + "./.env"
 });
 const express = require("express");
 const bodyParser = require("body-parser");
@@ -21,6 +21,7 @@ const db_config_remote = {
     database: process.env.db,
     port: process.env.db_port
 };
+console.log(db_config_remote);
 const validateLoginConfig = [ body('libid').trim().isLength({min: 4}).withMessage("Enter a valid Lib-Id").isNumeric().withMessage("Enter a valid Lib-Id") ];
 const validateSignUpConfig = [  body('fname').trim().escape().isLength({min:3}).withMessage('Enter a valid first name').isAlpha().withMessage('Enter a valid first name'),
                                 body('lname').trim().escape().isLength({min:0}).withMessage('Enter a valid last name').isAlpha().withMessage('Enter a valid last name'),
