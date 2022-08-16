@@ -9,17 +9,18 @@ const bcrypt = require("bcryptjs");
 const { body, validationResult } = require("express-validator");
 const cookieParser = require("cookie-parser");
 const db_config = {
-    host: 'localhost',
-    user: 'root',
-    password: '',
-    database: 'librarymanagement'
-};
-const db_config_remote = {
     host: process.env.db_host,
     user: process.env.db_user,
     password: process.env.db_pass,
     database: process.env.db,
     port: process.env.db_port
+};
+const db_config_remote = {
+    host: ENV['db_host'],
+    user: ENV['db_user'],
+    password: ENV['db_pass'],
+    database: ENV['db'],
+    port: ENV['db_port']
 };
 console.log(db_config_remote);
 const validateLoginConfig = [ body('libid').trim().isLength({min: 4}).withMessage("Enter a valid Lib-Id").isNumeric().withMessage("Enter a valid Lib-Id") ];
