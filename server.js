@@ -1,6 +1,6 @@
 // Importing all required node modules
 require('dotenv').config({
-    path: __dirname + '/config/env'
+    path: __dirname + "/.env"
 });
 const express = require("express");
 const bodyParser = require("body-parser");
@@ -189,7 +189,7 @@ function updateCopies(isbnArr, inc) {
 //Function to get previously borrowed books of the logged in user
 function getPreviousBooks(id, connection, page){ 
     return new Promise(function (resolve, reject) { 
-        const prevBooksQuery = "SELECT search.row_count, libid, isbn, status, staffName, dateBorrowed, dateReturned, fine FROM sql6513149.booktransaction, (SELECT COUNT(*) as row_count FROM sql6513149.booktransaction WHERE libid = ? AND dateReturned IS NOT NULL) as search HAVING libid = ? AND dateReturned IS NOT NULL ORDER BY id LIMIT " + ((Number(page) - 1) * pageOffset) + ", " + pageOffset;
+        const prevBooksQuery = "SELECT search.row_count, libid, isbn, status, staffName, dateBorrowed, dateReturned, fine FROM sql6513149.booktransaction, (SELECT COUNT(*) as row_count FROM sql6513149.booktransaction WHERE libid = ? AND dateReturned IS NOT NULL) as search HAVING libid = ? AND dateReturned IS NOT NULL ORDER BY id LIMIT " + ((page - 1) * pageOffset) + ", " + pageOffset;
         connection.query(prevBooksQuery,[ Number(id), Number(id) ], function (errP, prevBooks) { 
             if (errP) { 
                 return reject(errP);
@@ -537,9 +537,11 @@ function getAllBookDetails(page) {
 // Sending the loginpage on get request  
 app.get("/login", nocache, function (req, res) { 
     if (req.cookies['Student'] != undefined) {
-        getPrevBooksData(req.cookies['Student']).then(function (prevBookData) { 
+        let page = req.query.page == undefined ? 1 : Number(req.query.page);
+
+        getPrevBooksData(req.cookies['Student'], page).then(function (prevBookData) { 
             defPrevBooksData = prevBookData;
-            getCurrentBooksData(req.cookies['Student']).then(function (currBookData) { 
+            getCurrentBooksData(req.cookies['Student'], page).then(function (currBookData) { 
                 defCurrBorrowedBooks = currBookData;
                 res.redirect('dashboard');
             }).catch(err2 => console.log(err2));
@@ -1001,6 +1003,10 @@ let port = process.env.PORT;
 if (port == undefined || port == "") {
     port = 3000;
 }
+
+app.get('/', nocache, function (req, res) { 
+    res.redirect('/login')
+});
 // Listening to port 3000
 app.listen(port, function(){
     console.log("Server is up and running!");
