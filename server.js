@@ -85,8 +85,8 @@ function sconnect(){
 // Function to get pass from DB
 function exeLogin(id, connection){
     return new Promise(function (resolve, reject){
-        const lQuery = "SELECT libid, pass, userType FROM sql6513149.libusers WHERE libid = ?";
-        connection.query(lQuery, [ id ], function(err1, rows){
+        const lQuery = "SELECT libid, pass, userType FROM " + process.env.db + ".libusers WHERE libid = ?";
+        connection.query(lQuery, [ Number(id) ], function(err1, rows){
             if(err1){
                 return reject(err1);
             }
@@ -98,8 +98,8 @@ function exeLogin(id, connection){
 // Getting new Lib-id 
 function newLibId(connection){
     return new Promise(function(resolve, reject){
-        const libIdQuery = "SELECT newlibid FROM sql6513149.libcalc WHERE id = 1";
-        const upLibId = "UPDATE sql6513149.libcalc SET newlibid = newlibid + 1 WHERE id = 1";
+        const libIdQuery = "SELECT newlibid FROM " + process.env.db + ".libcalc WHERE id = 1";
+        const upLibId = "UPDATE " + process.env.db + ".libcalc SET newlibid = newlibid + 1 WHERE id = 1";
 
         connection.query(libIdQuery, function(errL, rows){
             if (errL) {
@@ -119,7 +119,7 @@ function newLibId(connection){
 // Function to insert all data into DB after sigup
 function signupInsert(dataArr, connection){
     return new Promise(function (resolve, reject) {
-        const insertQuery = "INSERT INTO sql6513149.libusers (userType, firstName, lastName, email, pass, roll, dept, uniqueNum, dob, created, libid) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        const insertQuery = "INSERT INTO " + process.env.db + ".libusers (userType, firstName, lastName, email, pass, roll, dept, uniqueNum, dob, created, libid) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         connection.query(insertQuery, dataArr, function(errMy){
             if(errMy){
                 return reject(errMy);
@@ -132,7 +132,7 @@ function signupInsert(dataArr, connection){
 // Function to get the search results from DB
 function searchDB(searchValue, searchFactor, page) {
     return new Promise(function (resolve, reject) {
-        var query = "SELECT search.row_count, name, author, publication_date, genre, price, noOfCopies, isbn FROM sql6513149.books, (SELECT COUNT(*) as row_count FROM sql6513149.books WHERE _searchFactor LIKE '_searchValue%') as search HAVING _searchFactor LIKE '_searchValue%' ORDER BY id LIMIT " + ((page - 1) * pageOffset) + ", " + pageOffset;
+        var query = "SELECT search.row_count, name, author, publication_date, genre, price, noOfCopies, isbn FROM " + process.env.db + ".books, (SELECT COUNT(*) as row_count FROM " + process.env.db + ".books WHERE _searchFactor LIKE '_searchValue%') as search HAVING _searchFactor LIKE '_searchValue%' ORDER BY id LIMIT " + ((page - 1) * pageOffset) + ", " + pageOffset;
         
         if (searchFactor == "Book Name" || searchFactor == "Search By:") {
             query = query.replace(/_searchFactor/g, "name");
@@ -168,9 +168,9 @@ function updateCopies(isbnArr, inc) {
         sconnect().then(function (connection) { 
             var updateQuery = "";
             if (inc == 1) {
-                updateQuery = "UPDATE sql6513149.books SET noOfCopies = noOfCopies + 1 WHERE (";
+                updateQuery = "UPDATE " + process.env.db + ".books SET noOfCopies = noOfCopies + 1 WHERE (";
             } else {
-                updateQuery = "UPDATE sql6513149.books SET noOfCopies = noOfCopies - 1 WHERE noOfCopies > 0 AND ( ";
+                updateQuery = "UPDATE " + process.env.db + ".books SET noOfCopies = noOfCopies - 1 WHERE noOfCopies > 0 AND ( ";
             }
             for (let i in isbnArr) {
                 updateQuery += "isbn = " + isbnArr[i] + " OR ";
@@ -190,7 +190,7 @@ function updateCopies(isbnArr, inc) {
 //Function to get previously borrowed books of the logged in user
 function getPreviousBooks(id, connection, page){ 
     return new Promise(function (resolve, reject) { 
-        const prevBooksQuery = "SELECT search.row_count, libid, isbn, status, staffName, dateBorrowed, dateReturned, fine FROM sql6513149.booktransaction, (SELECT COUNT(*) as row_count FROM sql6513149.booktransaction WHERE libid = ? AND dateReturned IS NOT NULL) as search HAVING libid = ? AND dateReturned IS NOT NULL ORDER BY id LIMIT " + ((page - 1) * pageOffset) + ", " + pageOffset;
+        const prevBooksQuery = "SELECT search.row_count, libid, isbn, status, staffName, dateBorrowed, dateReturned, fine FROM " + process.env.db + ".booktransaction, (SELECT COUNT(*) as row_count FROM " + process.env.db + ".booktransaction WHERE libid = ? AND dateReturned IS NOT NULL) as search HAVING libid = ? AND dateReturned IS NOT NULL ORDER BY id LIMIT " + ((page - 1) * pageOffset) + ", " + pageOffset;
         connection.query(prevBooksQuery,[ Number(id), Number(id) ], function (errP, prevBooks) { 
             if (errP) { 
                 return reject(errP);
@@ -206,7 +206,7 @@ function getBookDetails(isbns, connection) {
         if (isbns.length == 0) { 
             resolve("NIL");
         }
-        var bookDataQuery = "SELECT isbn, name, author, publication_date, genre, price, isbn FROM sql6513149.books WHERE ";
+        var bookDataQuery = "SELECT isbn, name, author, publication_date, genre, price, isbn FROM " + process.env.db + ".books WHERE ";
         const isbnArr = isbns.toString().split(" ");
         for (let isbn in isbnArr) { 
             bookDataQuery += "isbn = " + isbnArr[isbn] + " OR ";
@@ -224,7 +224,7 @@ function getBookDetails(isbns, connection) {
 //Function to get all the pending books of all users
 function getPendingBooks(status, connection, page) {
     return new Promise(function (resolve, reject) { 
-        let pendingBooksQuery = "SELECT search.row_count, id, libid, isbn, status, staffName, dateBorrowed, dateReturned, fine FROM sql6513149.booktransaction, (SELECT COUNT(*) as row_count FROM sql6513149.booktransaction WHERE status = ? AND dateReturned IS NULL) as search HAVING status = ? AND dateReturned IS NULL ORDER BY id LIMIT " + ((page - 1) * pageOffset) + ", " + pageOffset; 
+        let pendingBooksQuery = "SELECT search.row_count, id, libid, isbn, status, staffName, dateBorrowed, dateReturned, fine FROM " + process.env.db + ".booktransaction, (SELECT COUNT(*) as row_count FROM " + process.env.db + ".booktransaction WHERE status = ? AND dateReturned IS NULL) as search HAVING status = ? AND dateReturned IS NULL ORDER BY id LIMIT " + ((page - 1) * pageOffset) + ", " + pageOffset; 
         connection.query(pendingBooksQuery, [Number(status), Number(status)], function (err1, pendingBooks) {
             if (err1) {
                 return reject(err1);
@@ -278,7 +278,7 @@ function getUserDetails1(libids, connection) {
         if (libids.length == 0) {
             resolve("NIL");
         }
-        var userDataQuery = "SELECT libid, firstName, uniqueNum FROM sql6513149.libusers WHERE ";
+        var userDataQuery = "SELECT libid, firstName, uniqueNum FROM " + process.env.db + ".libusers WHERE ";
         const libidArr = libids.toString().split(" ");
         for (let id in libidArr) {
             userDataQuery += "libid = " + libidArr[id] + " OR ";
@@ -296,7 +296,7 @@ function getUserDetails1(libids, connection) {
 //Function the get the currently borrowed books of the user
 function getCurrBooksData(libid, connection, page) { 
     return new Promise(function (resolve, reject) { 
-        const currBookDataQuery = "SELECT search.row_count, libid, isbn, status, staffName, dateBorrowed, dateReturned, fine FROM sql6513149.booktransaction, (SELECT COUNT(*) as row_count FROM sql6513149.booktransaction WHERE libid = ? AND dateReturned IS NULL) as search HAVING libid = ? AND dateReturned IS NULL ORDER BY id LIMIT " + ((Number(page) - 1) * pageOffset) + ", " + pageOffset;
+        const currBookDataQuery = "SELECT search.row_count, libid, isbn, status, staffName, dateBorrowed, dateReturned, fine FROM " + process.env.db + ".booktransaction, (SELECT COUNT(*) as row_count FROM " + process.env.db + ".booktransaction WHERE libid = ? AND dateReturned IS NULL) as search HAVING libid = ? AND dateReturned IS NULL ORDER BY id LIMIT " + ((Number(page) - 1) * pageOffset) + ", " + pageOffset;
         connection.query(currBookDataQuery, [Number(libid), Number(libid)], function (err, bookData) { 
             if (err) { 
                 return reject(err);
@@ -373,7 +373,7 @@ function updateTransaction(libid, isbn, connection) {
         const isbns = isbn.split(" ");
         const date = new Date();
         const dateFormatted = date.getFullYear() + "-" + (date.getMonth() + 1) + "-" + date.getDate();
-        var updateTransactionQuery = "INSERT INTO sql6513149.booktransaction (libid, isbn, dateBorrowed) VALUES ";
+        var updateTransactionQuery = "INSERT INTO " + process.env.db + ".booktransaction (libid, isbn, dateBorrowed) VALUES ";
         for (let i in isbns) { 
             updateTransactionQuery += "( " + libid + ", " + isbns[i] + ", '" + dateFormatted + "' )," ;
         }
@@ -393,7 +393,7 @@ function processPendingBooks(idAndisbn) {
         sconnect().then(function (connection) {
             var date = new Date();
             const dat = date.getFullYear() + "-" + (date.getMonth() + 1) + "-" + date.getDate();
-            var transacQuery = "UPDATE sql6513149.booktransaction SET dateReturned = '" + dat + "', status = 0 WHERE ";
+            var transacQuery = "UPDATE " + process.env.db + ".booktransaction SET dateReturned = '" + dat + "', status = 0 WHERE ";
             for (let i in idAndisbn) {
                 let temp = idAndisbn[i].split(" ");
                 transacQuery += "libid = " + temp[0] + " AND isbn = " + temp[1] + " OR ";
@@ -414,7 +414,7 @@ function processPendingBooks(idAndisbn) {
 function changeStatus(idAndisbn, staffName) { 
     return new Promise(function (resolve, reject) { 
         sconnect().then(function (connection) { 
-            var statusQuery = "UPDATE sql6513149.booktransaction SET status = 1, staffName = '" + staffName + "' WHERE status = 0 AND ( ";
+            var statusQuery = "UPDATE " + process.env.db + ".booktransaction SET status = 1, staffName = '" + staffName + "' WHERE status = 0 AND ( ";
             for (let i in idAndisbn) {
                 let temp = idAndisbn[i].split(" ");
                 statusQuery += "( libid = " + temp[0] + " AND isbn = " + temp[1] + " ) OR ";
@@ -435,7 +435,7 @@ function changeStatus(idAndisbn, staffName) {
 function getStaffName(libid) { 
     return new Promise(function (resolve, reject) { 
         sconnect().then(function (connection) { 
-            const getStaffNameQuery = "SELECT firstName FROM sql6513149.libusers WHERE libid = " + libid;
+            const getStaffNameQuery = "SELECT firstName FROM " + process.env.db + ".libusers WHERE libid = " + libid;
             connection.query(getStaffNameQuery, function (err, row) { 
                 if (err) { 
                     return reject(err);
@@ -450,7 +450,7 @@ function getStaffName(libid) {
 function addNewBook(bookData) { 
     return new Promise(function (resolve, reject) {
         sconnect().then(function (connection) {
-            const addBookQuery = "INSERT INTO sql6513149.books (name, author, publication_date, genre, price, noOfCopies, isbn) VALUES (?, ?, ?, ?, ?, ?, ?)";
+            const addBookQuery = "INSERT INTO " + process.env.db + ".books (name, author, publication_date, genre, price, noOfCopies, isbn) VALUES (?, ?, ?, ?, ?, ?, ?)";
             connection.query(addBookQuery, bookData, function (err, stat) { 
                 if (err) { 
                     return reject(err);
@@ -465,7 +465,7 @@ function addNewBook(bookData) {
 function getUserDetails(type, page) {
     return new Promise((resolve, reject) => {
         sconnect().then(function (connection) { 
-            var staffDetailsQuery = "SELECT search.row_count, id, userType, firstName, lastName, email, dob, roll, dept, uniqueNum, created, libid FROM sql6513149.libusers, (SELECT COUNT(*) as row_count FROM sql6513149.libusers WHERE userType = ?) as search HAVING userType = ? ORDER BY id LIMIT " + ((page - 1) * pageOffset) + ", " + pageOffset;
+            var staffDetailsQuery = "SELECT search.row_count, id, userType, firstName, lastName, email, dob, roll, dept, uniqueNum, created, libid FROM " + process.env.db + ".libusers, (SELECT COUNT(*) as row_count FROM " + process.env.db + ".libusers WHERE userType = ?) as search HAVING userType = ? ORDER BY id LIMIT " + ((page - 1) * pageOffset) + ", " + pageOffset;
             connection.query(staffDetailsQuery, [type, type], function (err, rows) {
                 if (err) {
                     return reject(err);
@@ -480,7 +480,7 @@ function getUserDetails(type, page) {
 function getAllTransactions(page) { 
     return new Promise(function (resolve, reject) { 
         sconnect().then(function (connection) { 
-            const transactionQuery = "SELECT search.row_count, id, isbn, libid, status, staffName, dateBorrowed, dateReturned, fine FROM sql6513149.booktransaction, (SELECT COUNT(*) as row_count FROM sql6513149.booktransaction) as search ORDER BY id LIMIT " + ((page - 1) * pageOffset) + ", " + pageOffset;
+            const transactionQuery = "SELECT search.row_count, id, isbn, libid, status, staffName, dateBorrowed, dateReturned, fine FROM " + process.env.db + ".booktransaction, (SELECT COUNT(*) as row_count FROM " + process.env.db + ".booktransaction) as search ORDER BY id LIMIT " + ((page - 1) * pageOffset) + ", " + pageOffset;
             
             connection.query(transactionQuery, function (err, rows) {
                 if (err) {
@@ -498,9 +498,9 @@ function removeData(id, type) {
         sconnect().then(function (connection) {
             let removeQuery = "";
             if (type == "user") {
-                removeQuery = "DELETE FROM sql6513149.libusers WHERE libid = '" + id + "'";
+                removeQuery = "DELETE FROM " + process.env.db + ".libusers WHERE libid = '" + id + "'";
             } else { 
-                removeQuery = "DELETE FROM sql6513149.books WHERE isbn = '" + id + "'";
+                removeQuery = "DELETE FROM " + process.env.db + ".books WHERE isbn = '" + id + "'";
             }
             connection.query(removeQuery, function (err, result) { 
                 if (err) {
@@ -516,7 +516,7 @@ function removeData(id, type) {
 function getAllBookDetails(page) {
     return new Promise(function (resolve, reject) {
         sconnect().then(function (connection) {
-            var getUserDetailsQuery = "SELECT search.row_count, name, author, publication_date, genre, price, noOfCopies, isbn FROM sql6513149.books, (SELECT COUNT(*) as row_count FROM sql6513149.books) as search ORDER BY id LIMIT " + ((page - 1) * pageOffset) + ", " + pageOffset;
+            var getUserDetailsQuery = "SELECT search.row_count, name, author, publication_date, genre, price, noOfCopies, isbn FROM " + process.env.db + ".books, (SELECT COUNT(*) as row_count FROM " + process.env.db + ".books) as search ORDER BY id LIMIT " + ((page - 1) * pageOffset) + ", " + pageOffset;
 
             connection.query(getUserDetailsQuery, function (err, results) {
                 if (err) {
