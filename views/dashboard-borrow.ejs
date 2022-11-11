@@ -44,15 +44,15 @@
                     <% for (let data in searchData){ %>
                         <tr id="<%= searchData[data]['isbn'] %>A">
                             <td><%= x+1 %></td>
-                            <td><%= searchData[data]['name'] %></td>
+                            <td><%= searchData[data]['name']+" " + tot_count %></td>
                             <td class="text-center"><%= searchData[data]['author'] %></td>
-                            <td class="text-center"><%= searchData[data]['publication_date'].substring(0, 4) %></td>
+                            <td class="text-center"><%= searchData[data]['year']%></td>
                             <td class="text-center"><%= searchData[data]['genre'] %></td>
                             <td class="text-center"><%= "₹" + searchData[data]['price'] %></td>
                             <td><%= searchData[data]['isbn'] %></td>
                             <% if (searchData[data]['noOfCopies'] >= 1 ) { %>
                                 <td class="text-center">Yes</td>
-                                <td><button class="btn btn-outline-secondary" id="<%= searchData[data]['isbn'] %>" type="button" onclick="addBook(this.id)">Lend</button></td>
+                                <td><button class="btn btn-outline-primary" id="<%= searchData[data]['isbn'] %>" type="button" onclick="addBook(this.id)">Lend</button></td>
                             <% } else { %>
                                 <td class="text-center">No</td>
                                 <td><button class="btn btn-outline-secondary" type="button" disabled>Lend</button></td>
@@ -62,9 +62,12 @@
                 </tbody>
             </table>
             
-            <% if (searchConfig[0]['noOfSearchResults'] <= 0) { %>
+            <% if (noOfSearchResults <= 0) { %>
                 <p class="ms-auto me-auto mt-2 dashboard-warning"> Oops! No books found. </p>
             <% } %>
+            
+
+            
         </div>
 
 
@@ -119,7 +122,7 @@
 
         <!-- SUBMIT BUTTON -->
         <div class="text-center mb-5" id="lend_btn">
-            <form action="/confirmBooks" method="post" id="bookLend">
+            <form action="/dashboard/confirmBooks" method="post" id="bookLend">
                 <input type="text" name="booksSelected" id="booksSelectedInp" style="display: none;">
                 <button class="btn dashboard-btn" type="submit">Lend Books</button>
             </form>

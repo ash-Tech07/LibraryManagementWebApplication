@@ -17,7 +17,7 @@
                     <th>Year</th>
                     <th>ISBN</th>
                     <th>Price</th>
-                    <th>Date to be Borrowed on</th>
+                    <th>Ordered on</th>
                     <th>Action</th>
                 </thead>
                 <tbody>
@@ -25,18 +25,18 @@
                         <% let pageOffset = 10; %>
                         <% let x = (tot_count[1]-1) * pageOffset;%>
                         <% for(let isbn in yetBorrowedBooks) { %>
-                            <tr id = "<%= yetBorrowedBooks[isbn]['libid'] + ' ' + yetBorrowedBooks[isbn]['isbn'] %>">
+                            <tr id = "<%= yetBorrowedBooks[isbn]['library_id'] + ' ' + yetBorrowedBooks[isbn]['isbn'] %>">
                                 <td>
                                     <%= x+1 %>
                                 </td>
                                 <td>
-                                    <%= yetBorrowedBooks[isbn]['libid'] %>
+                                    <%= yetBorrowedBooks[isbn]['library_id'] %>
                                 </td>
                                 <td>
-                                    <%= yetBorrowedBooks[isbn]['stuName'] %>
+                                    <%= yetBorrowedBooks[isbn]['first_name'] %>
                                 </td>
                                 <td>
-                                    <%= yetBorrowedBooks[isbn]['uniqueNum'] %>
+                                    <%= yetBorrowedBooks[isbn]['unique_number'] %>
                                 </td>
                                 <td>
                                     <%= yetBorrowedBooks[isbn]['name'] %>
@@ -48,7 +48,7 @@
                                     <%= yetBorrowedBooks[isbn]['genre'] %>
                                 </td>
                                 <td class="text-center">
-                                    <%= yetBorrowedBooks[isbn]['publication_date'].substring(0, 4) %>
+                                    <%= yetBorrowedBooks[isbn]['year'] %>
                                 </td>
                                 <td>
                                     <%= yetBorrowedBooks[isbn]['isbn'] %>
@@ -57,7 +57,7 @@
                                     <%= "₹" + yetBorrowedBooks[isbn]['price'] %>
                                 </td>
                                 <td>
-                                    <%= yetBorrowedBooks[isbn]['dateBorrowed'] %>
+                                    <%= yetBorrowedBooks[isbn]['date_borrowed'] %>
                                 </td>
                                 <td><button class="btn btn-sm dashboard-btn" onclick="processYetBorrowedBooks(this, 'yetBorrowedBooksDataInp');">Give</button></td>
                             </tr>

@@ -13,7 +13,7 @@
             <div class="mt-2 col-md-12 mx-auto form-heading">
               <p>User Type: </p>
             </div>
-            <select id="user" class="mt-1 form-select no-border" name="userType">
+            <select id="user" class="mt-1 form-select no-border" name="user_type">
               <option>Student</option>
               <option>Staff</option>
               <option>Admin</option>
@@ -25,13 +25,13 @@
           </div>
 
           <div class="col-md-6 form-floating mt-3">
-            <input type="text" class="form-control no-border" id="fname" placeholder="Ashwin" name="fname">
+            <input type="text" class="form-control no-border" id="fname" placeholder="Ashwin" name="first_name">
             <label for="fname" class="form-label">First Name</label>
             <p class="small text-danger"><%= fname %></p>
           </div>
 
           <div class="col-md-6 form-floating mt-3">
-            <input type="text" class="form-control no-border" id="lname" placeholder="A" name="lname">
+            <input type="text" class="form-control no-border" id="lname" placeholder="A" name="last_name">
             <label for="lname" class="form-label">Last Name</label>
             <p class="small text-danger"><%= lname %></p>
           </div>
@@ -43,20 +43,20 @@
           </div>
 
           <div class="col-md-6 form-floating mt-4">
-            <input type="password" class="form-control no-border" id="inputPassword4" placeholder="password" name="pass">
+            <input type="password" class="form-control no-border" id="inputPassword4" placeholder="password" name="password">
             <label for="inputPassword4" class="form-label">Password</label>
             <p class="small text-danger"><%= pass %></p>
           </div>
 
           <div class="col-6 form-floating mt-5" id = "rollStudent">
-            <input type="text" class="form-control no-border" id="roll" placeholder="2020506016" name="roll">
+            <input type="text" class="form-control no-border" id="roll" placeholder="2020506016" name="roll_no">
             <label for="roll" class="form-label">Roll No.</label>
             <p class="small text-danger"><%= roll %></p>
           </div>
 
           <div class="col-6">
             <label for="dept" class="form-label">Department</label>
-            <select id="dept" class="form-select no-border" style="height: 55px" name="dept">
+            <select id="dept" class="form-select no-border" style="height: 55px" name="department">
               <option>IT</option>
               <option>CT</option>
               <option>ECE</option>
@@ -70,14 +70,14 @@
           </div>
 
           <div class="col-md-6 form-floating mt-5">
-            <input type="text" class="form-control no-border" id="inputUnique" placeholder="Unique Number" name="uniqueNum">
+            <input type="text" class="form-control no-border" id="inputUnique" placeholder="Unique Number" name="unique_number">
             <label for="inputUnique" class="form-label">Unique Number</label>
             <p class="small text-danger"><%= uniqueNum %></p>
           </div>
 
           <div class="col-md-6 mt-3" id="dobAlign">
             <label for="dob" class="form-label">DOB</label>
-            <input type="date" class="form-control no-border" id="dob" placeholder="10-03-2000" style="height: 58px" name="dob">
+            <input type="date" class="form-control no-border" id="dob" placeholder="10-03-2000" style="height: 58px" name="date_of_birth">
           </div>
 
           <div class="col-12 mt-4">

@@ -11,13 +11,13 @@
                 <div class="mt-4 text-center mx-auto">
                   <form action= "/login" method="POST">
                     <div class="form-floating mb-3">
-                      <input name="libid" type="text" id="libId" class="form-control shadow-none no-border" placeholder="0000" autocomplete="off" required>
+                      <input name="library_id" type="text" id="libId" class="form-control shadow-none no-border" placeholder="0000" autocomplete="off" required>
                       <label for="libId">Library ID</label>
                       <p class="small text-danger"><%= lUserErr %></p>
                     </div>
 
                     <div class="form-floating mb-3">
-                      <input name="lpass" type="password" id="pass" class="form-control shadow-none no-border" placeholder="Password" required>
+                      <input name="password" type="password" id="pass" class="form-control shadow-none no-border" placeholder="Password" required>
                       <label for="placeValuePassword">Password</label>
                       <p class="small text-danger"><%= lPassErr %></p>
                     </div>

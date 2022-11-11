@@ -201,22 +201,9 @@ ul.nav.nav-tabs li.nav-item button.nav-link.active {
   display: none;
 }
 
-
-/* footer{
-  margin-top: 50px;
-  background-color: #47B5FF;
+td{
+  text-align: center;
 }
-
-.footer-links{
-  color: #000;
-}
-.footer-links ul li:hover{
-  color: #47B5FF;
-} */
-
-/* h5{
-  color: #FFFFFF;
-} */
 
 .copyright{
   width: 100vw;

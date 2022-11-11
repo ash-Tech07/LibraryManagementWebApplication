@@ -24,18 +24,18 @@
                     <% let pageOffset = 10; %>
                     <% let x = (tot_count[1]-1) * pageOffset;%>
                     <% for(let isbn in pendingBooks) { %>
-                        <tr id = "<%= pendingBooks[isbn]['libid'] + ' ' + pendingBooks[isbn]['isbn'] %>">
+                        <tr id = "<%= pendingBooks[isbn]['library_id'] + ' ' + pendingBooks[isbn]['isbn'] %>">
                             <td>
                                 <%= x+1 %>
                             </td>
                             <td>
-                                <%= pendingBooks[isbn]['libid'] %>
+                                <%= pendingBooks[isbn]['library_id'] %>
                             </td>
                             <td>
-                                <%= pendingBooks[isbn]['stuName'] %>
+                                <%= pendingBooks[isbn]['first_name'] %>
                             </td>
                             <td>
-                                <%= pendingBooks[isbn]['uniqueNum'] %>
+                                <%= pendingBooks[isbn]['unique_number'] %>
                             </td>
                             <td>
                                 <%= pendingBooks[isbn]['name'] %>
@@ -43,20 +43,20 @@
                             <td>
                                 <%= pendingBooks[isbn]['author'] %>
                             </td>
-                            <td class="text-center">
+                            <td>
                                 <%= pendingBooks[isbn]['genre'] %>
                             </td>
-                            <td class="text-center">
-                                <%= pendingBooks[isbn]['publication_date'].substring(0, 4) %>
+                            <td>
+                                <%= pendingBooks[isbn]['year']%>
                             </td>
                             <td>
                                 <%= pendingBooks[isbn]['isbn'] %>
                             </td>
-                            <td class="text-center">
+                            <td>
                                 <%= "₹" + pendingBooks[isbn]['price'] %>
                             </td>
                             <td>
-                                <%= pendingBooks[isbn]['dateBorrowed'] %>
+                                <%= pendingBooks[isbn]['date_borrowed'] %>
                             </td>
                             <td><button class="btn btn-sm dashboard-btn" onclick="processPendingBooks(this, 'processPendingBooksInp');">Return</button></td>
                         </tr>

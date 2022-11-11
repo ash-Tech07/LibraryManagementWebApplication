@@ -26,17 +26,17 @@
                 <% for (let data in prevBooksData){ %>
                     <tbody>
                         <tr>
-                            <td>
+                            <td class="text-center">
                                 <%= x+1 %>
                             </td>
-                            <td>
+                            <td class="text-center">
                                 <%= prevBooksData[data]['name'] %>
                             </td>
-                            <td>
+                            <td class="text-center">
                                 <%= prevBooksData[data]['author'] %>
                             </td>
                             <td class="text-center">
-                                <%= prevBooksData[data]['publication_date'].substring(0, 4) %>
+                                <%= prevBooksData[data]['year']%>
                             </td>
                             <td class="text-center">
                                 <%= prevBooksData[data]['genre'] %>
@@ -44,14 +44,14 @@
                             <td class="text-center">
                                 <%= "₹" + prevBooksData[data]['price'] %>
                             </td>
-                            <td>
+                            <td class="text-center">
                                 <%= prevBooksData[data]['isbn'] %>
                             </td>
-                            <td>
-                                <%= prevBooksData[data]['dateBorrowed'] %>
+                            <td class="text-center">
+                                <%= prevBooksData[data]['date_borrowed'] %>
                             </td>
-                            <td>
-                                <%= prevBooksData[data]['dateReturned'] %>
+                            <td class="text-center">
+                                <%= prevBooksData[data]['date_returned'] %>
                             </td>
                             <td class="text-center">
                                 <%= prevBooksData[data]['fine'] %>
