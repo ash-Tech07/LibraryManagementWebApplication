@@ -2,6 +2,12 @@ window.onload = function () {
     if (screen.width <= 350) {
         document.getElementById("nav_brand").classList.remove("ms-3");
     }
+
+    const toastLiveExample = document.getElementById('liveToast');
+    if (toastLiveExample && window.location.href.endsWith("success") || window.location.href.endsWith("failed")) {
+        const toast = new bootstrap.Toast(toastLiveExample);
+        toast.show();
+    }
 }
 
 window.onresize = function () {

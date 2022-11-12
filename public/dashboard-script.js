@@ -67,7 +67,3 @@ document.getElementById("bookLend").onsubmit = function (form) {
     }
 }
 
-
-
-
-

@@ -38,8 +38,8 @@ const bookSchema = new schema(
 const transactionSchema = new schema({
     library_id: Number,
     isbn: String,
-    book_status: Boolean,
-    staff_name: String,
+    book_status: Number,
+    staff_name: Number,
     date_borrowed: Date,
     date_returned: Date,
     fine: Number
@@ -56,15 +56,6 @@ const userSchema = new schema({
     department: String,
     password: String,
     unique_number: String,
-    borrowed_books: [{
-        isbn: String
-    }],
-    currently_borrowed_books: [{
-        isbn: String
-    }],
-    returned_books: [{
-        isbn: String
-    }],
     created: Date
 });
 
@@ -95,7 +86,6 @@ const validateSearchConfig = [body('searchBar').trim().escape().toLowerCase()];
 
 //Default values for all configuration
 var defAddBookErrors = [{ "bname": "", "author": "", "year": "", "genre": "", "price": "", "isbn": "", "noOfCopies": ""}];                 
-var defPrevBooksData = {};
 var defCurrBorrowedBooks = {};  
 var defPendingBooks = {};   
 var defYetBorrowedBooks = {};
@@ -119,9 +109,7 @@ function nocache(req, res, next) {
 //Function to get the year from datetime
 function getYearFromDateTime(data) { 
     for (let i in data) { 
-        let year = new Date(data[i]['publication_date']).toISOString();
-        let onlyYear = year.split("T")[0].substring(0, 4);
-        data[i]['year'] = onlyYear;
+        data[i]['year'] = new Date(data[i]['publication_date']).toISOString().split("T")[0].substring(0, 4);
     }
     return data;
 }
@@ -131,14 +119,13 @@ function getDateFromDateTime(data) {
     let res = [];
     for (let i in data) { 
         let temp = {};
-        console.log(res);
         temp["library_id"] = data[i]["library_id"];
         temp["isbn"] = data[i]["isbn"];
         temp["book_status"] = data[i]["book_status"];
         temp["staff_name"] = data[i]["staff_name"];
         temp["date_borrowed"] = new Date(data[i]['date_borrowed']).toISOString().split("T")[0];
         temp["fine"] = data[i]["fine"];
-        temp["date_returned"] = data[i]['date_returned'] != null ? new Date(data[i]['date_returned']).toISOString() : "-";
+        temp["date_returned"] = data[i]['date_returned'] != null ? new Date(data[i]['date_returned']).toISOString().split("T")[0] : "-";
         res.push(temp);
     }
     return res;
@@ -152,7 +139,7 @@ function checkUserExisits(id, pass){
                 User.find({ library_id: id }, function (err, userData) { 
                     let temp = false, type = 'none';
                     if (err) {
-                        return reject("db query error");
+                        return reject(false);
                     } else { 
                         if (userData.length != 0) {
                             temp = bcrypt.compareSync(pass, userData[0]['password']);
@@ -162,8 +149,9 @@ function checkUserExisits(id, pass){
                     }
                 });
             },
-            err => { 
-                return reject("db connection error");
+            err => {
+                console.log(err);
+                return reject(false);
             }
         );
     });
@@ -176,14 +164,12 @@ function createNewUser(newUserData) {
             () => {
                 User.estimatedDocumentCount(function (err, count) {
                     if (err) {
-                        console.log(err);
                         return reject(false);
                     } else {
                         newUserData['library_id'] = Number(count + 2000);
                         const newUser = new User(newUserData);
                         newUser.save(function (err, _doc) {
                             if (err) {
-                                console.log(err);
                                 return reject(false);
                             } else {
                                 resolve(newUserData);
@@ -201,22 +187,34 @@ function createNewUser(newUserData) {
 }
 
 //Function to get the transaction data using library_id
-function getTransactionsData(id) { 
-    return new Promise(function (resolve, reject) { 
+function getTransactionsData(id, status, page) { 
+    return new Promise(function (resolve, reject) {
+        let filter;
+        if (status == 0 && id == 0) {
+            filter = {};
+        } else if (status == 0 && id != 0) {
+            filter = { library_id: id };
+        } else if (status != 0 && id == 0) {
+            filter = { book_status: status };
+        } else { 
+            filter = { library_id: id, book_status: status };
+        }
         mongoose.connect(uri).then(
-            () => { 
-                Transaction.find({ library_id: id }, function (err, transacData) { 
-                    if (err) {
+            () => {
+                Transaction.find(filter, function (err1, data) { 
+                    if (err1) {
                         return reject(false);
-                    } else {
-                        let finTransData = {};
-                        transacData = getDateFromDateTime(transacData);
-                        for (let i in transacData) { 
-                            finTransData[transacData[i]["isbn"]] = transacData[i];
-                        }
-                        resolve(finTransData);
+                    } else { 
+                        Transaction.find(filter, {}, { skip: (page - 1) * pageOffset, limit: pageOffset }, function (err, transacData) { 
+                            if (err) {
+                                return reject(false);
+                            } else {
+                                transacData = getDateFromDateTime(transacData);
+                                resolve([data.length, transacData]);
+                            }
+                        });
                     }
-                });
+                });      
             },
             err => {
                 console.log("Database connection Error! Try again");
@@ -290,7 +288,7 @@ function searchDB(searchValue, searchFactor, page) {
                 if (searchValue == "*") {
                     Book.find({}, {}, { skip: (page - 1) * pageOffset, limit: pageOffset }, function (err, data) {
                         if (err) {
-                            return reject("false1");
+                            return reject(false);
                         } else {
                             Book.find().count(function (err1, cnt) {
                                 if (err1) {
@@ -305,22 +303,15 @@ function searchDB(searchValue, searchFactor, page) {
                 } else {
                     Book.find({ [filteredSearchFactor]: { $regex: ".*" + searchValue + ".*", $options: "i" } }, {}, { skip: (page - 1) * pageOffset, limit: pageOffset }, function (err, data) {
                         if (err) {
-                            return reject("false2");
+                            return reject(false);
                         } else {
                             Book.find({ [filteredSearchFactor]: { $regex: ".*" + searchValue + ".*", $options: "i" } }).count(function (err1, cnt) { 
                                 if (err1) {
                                     return reject(false);
                                 } else {
-                                    for (let i in data) { 
-                                        let year = new Date(data[i]['publication_date']).toISOString();
-                                        let onlyYear = year.split("T")[0].substring(0, 4);
-                                        data[i]['year'] = onlyYear;                            
-                                    }
-                                    resolve([cnt, data]);
+                                    resolve([cnt, getYearFromDateTime(data)]);
                                 }
                             });
-                            
-        
                         }
                     });
                 }
@@ -331,13 +322,12 @@ function searchDB(searchValue, searchFactor, page) {
             }
         );
      });
- }
+}
 
 //Function to update the no of copies of borrowed books
 function updateCopies(isbnArr, inc) {
     return new Promise(function (resolve, reject) {
         let val = inc == 0 ? -1 : 1;
-
         mongoose.connect(uri).then(
             () => { 
                 Book.updateMany({ isbn: { $in: isbnArr } }, { $inc: { 'noOfCopies': val } }, function (err, modifiedData) { 
@@ -387,7 +377,7 @@ function getPendingBooks(status, page) {
                                         for (let i in bookData) { 
                                             finBookData[bookData[i]['isbn']] = bookData[i];
                                         }
-                                        for (let i in bookData) { 
+                                        for (let i in userData) { 
                                             finUserData[userData[i]['library_id']] = userData[i];
                                         }
 
@@ -438,138 +428,172 @@ function addNewBook(bookData) {
     });
 }
 
+//Function to get the book data of the user
+function getUserBookData(id, status, page) { 
+    return new Promise(function (resolve, reject) {
+        let finData = [];
+        getTransactionsData(id, status, page).then(function (data) {
+            let isbnObj = {}, libidObj = {};
+            let transData = data[1];
 
-
-
-
-//Function the get the currently borrowed books of the user
-function getCurrBooksData(libid, connection, page) { 
-    return new Promise(function (resolve, reject) { 
-        const currBookDataQuery = "SELECT search.row_count, libid, isbn, status, staffName, dateBorrowed, dateReturned, fine FROM " + process.env.db + ".booktransaction, (SELECT COUNT(*) as row_count FROM " + process.env.db + ".booktransaction WHERE libid = ? AND dateReturned IS NULL) as search HAVING libid = ? AND dateReturned IS NULL ORDER BY id LIMIT " + ((Number(page) - 1) * pageOffset) + ", " + pageOffset;
-        resolve([]);
-    });
-}
-
-//Function to get the previously borrowed books of the user
-function getPrevBooksData(id, page) { 
-    return new Promise(function (resolve, reject) { 
-        mongoose.connect(uri).then(
-            () => {
-                let cnt = 0;
-                User.find({ library_id: id }, { borrowed_books: 1 }, function (err1, allData) { 
-                    if (err1) {
-                        return reject(false);
-                    } else { 
-                        cnt = allData.length;
-                        User.find({ library_id: id }, { borrowed_books: 1 }, { skip: (page - 1) * pageOffset, limit: pageOffset }, function (err1, data) { 
-                            if (err1) {
-                                return reject(false);
-                            } else { 
-                                let isbnArray = [];
-                                for (let i in data[0]['borrowed_books']) { 
-                                    isbnArray.push(data[0]['borrowed_books'][i]['isbn']);
-                                }
-
-                                getBookData(isbnArray).then(function (bookData) {
-
-                                    getTransactionsData(id).then(function (transData) {
-                                    
-                                        for (let i in bookData) { 
-                                            bookData[i]['date_borrowed'] = transData[bookData[i]["isbn"]]["date_borrowed"];
-                                            bookData[i]['date_returned'] = transData[bookData[i]["isbn"]]["date_returned"];
-                                            bookData[i]['fine'] = transData[bookData[i]["isbn"]]["fine"];
-                                        }
-                                        
-                                        resolve([cnt, bookData]);
-                                    }).catch(function (err1) {
-                                        console.log(err1);
-                                        return reject(false);
-                                    });
-
-                                }).catch(function (err) {
-                                    console.log(err);
-                                    return reject(false);
-                                });
-                            }
-                        });
-                    }
-                });
-            },
-            err => { 
-                console.log("Database connection error Try again!");
-                return reject(false);
+            for (let i in data[1]) { 
+                isbnObj[data[1][i]['isbn']] = 1;
+                libidObj[data[1][i]['library_id']] = 1;
             }
-        );
-        
+
+            getBookData(Object.keys(isbnObj)).then(function (bookData) {
+                bookData = getYearFromDateTime(bookData);
+                let finBookData = {};
+                for (let i in bookData) { 
+                    finBookData[bookData[i]['isbn']] = bookData[i];
+                }
+
+                getUserDetails(Object.keys(libidObj)).then(function (userData) {
+                    let finUserData = {};
+                    for (let i in userData) {
+                        finUserData[userData[i]['library_id']] = userData[i];
+                    }
+
+                    for (let i in transData) {
+                        let temp = {};
+                        temp['name'] = finBookData[transData[i]['isbn']]['name'];
+                        temp['author'] = finBookData[transData[i]['isbn']]['author'];
+                        temp['year'] = finBookData[transData[i]['isbn']]['year'];
+                        temp['price'] = finBookData[transData[i]['isbn']]['price'];
+                        temp['genre'] = finBookData[transData[i]['isbn']]['genre'];
+                        temp['isbn'] = finBookData[transData[i]['isbn']]['isbn'];
+                        temp['library_id'] = transData[i]['library_id'];
+                        temp['first_name'] = finUserData[transData[i]['library_id']]['first_name'];
+                        temp['unique_number'] = finUserData[transData[i]['library_id']]['unique_number'];
+                        temp['date_borrowed'] = transData[i]['date_borrowed'];
+                        temp['date_returned'] = transData[i]['date_returned'];
+                        temp['fine'] = transData[i]['fine'];
+                        finData.push(temp);
+                    }
+
+                    resolve([data[0], finData]);
+                }).catch(function (err2) {
+                    console.log(err2);
+                    return reject(false);
+                });
+            }).catch(function (err) {
+                console.log(err);
+                return reject(false);
+            });
+            
+        }).catch(function (err1) {
+            console.log(err1);
+            return reject(false);
+        });
+
     });
     
 }
 
-//Function to get the currently borrowed books of the user
-function getCurrentBooksData(libid, page) {
-    return new Promise(function (resolve, reject) {
-            getCurrBooksData(libid, page).then(function (currData) {
-                if (currData.length != 0) {
-                    var isbns = "";
-                    for (let i in currData) {
-                        isbns += currData[i]['isbn'] + " ";
-                    }
-                    getBookData(isbns.trim(), resS).then(function (bookData) {
-                        var finalCurrentBooksData = {};
-                        for (let i in bookData) {
-                            finalCurrentBooksData[bookData[i]['isbn']] = bookData[i];
-                        }
-                        for (let i in currData) {
-                            finalCurrentBooksData[currData[i]['isbn']]['dateBorrowed'] = (new Date(currData[i]['dateBorrowed'])).toDateString();
-                        }
-                        resolve([finalCurrentBooksData, currData[0]['row_count']]);
-                    }).catch(err => { return reject(err); });
-                } else { 
-                    resolve(["NIL", 0]);
-                }
 
-            }).catch(err1 => { return reject(err1); });
-    });
-}
+
 
 //Function to add book transaction
-function updateTransaction(id, isbnArray) {
+function updateTransaction(id, stat, isbnArray, keyValue, staff) {
     return new Promise(function (resolve, reject) { 
-        const date = new Date();
-        const dateFormatted = date.getFullYear() + "-" + (date.getMonth() + 1) + "-" + date.getDate();
-        let newTransaction = [];
-        let newISBN = [{ currently_borrowed_books: {} }];
-
-        for (let eachIsbn in isbnArray) { 
-            newTransaction.push({
-                library_id: id,
-                isbn: isbnArray[eachIsbn],
-                book_status: false,
-                staff_name: null,
-                date_borrowed: new Date(),
-                date_returned: null,
-                fine: 0
-            });
-        }
-        mongoose.connect(uri).then(
-            () => { 
-                Transaction.insertMany(newTransaction, {}, function (err, status) { 
-                    if (err) {
-                        return reject(false);
-                    } else {
-                        if (status.length != isbnArray.length) {
+        if (stat == 0) {
+            let newTransaction = [];
+    
+            for (let eachIsbn in isbnArray) {
+                newTransaction.push({
+                    library_id: id,
+                    isbn: isbnArray[eachIsbn],
+                    book_status: 1,
+                    staff_name: null,
+                    date_borrowed: new Date(),
+                    date_returned: null,
+                    fine: 0
+                });
+            }
+            mongoose.connect(uri).then(
+                () => {
+                    Transaction.insertMany(newTransaction, {}, function (err, ack) {
+                        if (err) {
                             return reject(false);
                         } else {
-                            resolve(true);
+                            if (ack.length != isbnArray.length) {
+                                return reject(false);
+                            } else {
+                                resolve(true);
+                            }
+                        }
+                    });
+                },
+                err => {
+                    console.log("DB connection error! Try again");
+                    return reject(false);
+                }
+            );
+        } else { 
+            
+            let updateDate = stat == 1 ? { book_status: Number(stat) + 1 } : { book_status: Number(stat) + 1, date_returned: new Date()} ;
+            let idObj = {};
+            let tempIsbnArray = [];
+            let cnt = 0;
+            let globalID;
+            for (let i in keyValue) { 
+                idObj[keyValue[i][0]] = 1;
+            }
+
+
+            const dbUpdate = new Promise((resolve2, reject2) => { 
+                mongoose.connect(uri).then(
+                    () => { 
+                        Transaction.updateMany({ library_id: globalID, book_status: stat, isbn: { $in: tempIsbnArray } }, { $set: updateDate }, function (err, ack) {
+                            if (err) {
+                                resolve2(0);
+                            } else {
+                                if (ack['modifiedCount'] == tempIsbnArray.length) {
+                                    resolve2(1);
+                                }
+                            }
+                        }); 
+                    },
+                    err => { 
+                        console.log(err);
+                    }
+                );
+                        
+            });
+
+
+
+            const pre1 = new Promise((resolve1, reject1) => { 
+                for (let i in idObj) {
+                    globalID = i;
+                    tempIsbnArray = [];
+                    for (let j in keyValue) {
+                        if (keyValue[j][0] == i) {
+                            tempIsbnArray.push(keyValue[j][1]);
                         }
                     }
-                });
-            },
-            err => {
-                console.log("DB connection error! Try again");
-                return reject(false);
-            }
-        );
+                            
+
+                    dbUpdate.then((count) => {
+                        cnt += count;
+                        resolve1(cnt);
+                    });
+                }
+                        
+            });
+
+
+            pre1.then((finalCount) => { 
+                if (finalCount == Object.keys(idObj).length) {
+                    resolve(true);
+                } else { 
+                    return reject(false);
+                }
+            });
+
+                   
+        }
+        
     });  
 }
 
@@ -773,9 +797,6 @@ app.post("/signUp", validateSignUpConfig, function (req, res) {
         userData['password'] = hpass;
         userData['created'] = date.getFullYear() + "-" + (date.getMonth() + 1) + "-" + date.getDate() + " " + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds();
         userData['date_of_birth'] = dobTemp.getFullYear() + "-" + (dobTemp.getMonth() + 1) + "-" + dobTemp.getDate();
-        userData['currently_borrowed_books'] = {};
-        userData['borrowed_books'] = {};
-        userData['returned_books'] = {};
         delete userData['reg_btn'];
 
         createNewUser(userData).then(function (status) {
@@ -794,7 +815,6 @@ app.post("/signUp", validateSignUpConfig, function (req, res) {
         }).catch(err => console.log(err));
       
     } else {
-        console.log(filteredSignUpData);
         for (let err in filteredSignUpData) {
 
             switch (filteredSignUpData[err]['param']) {
@@ -849,50 +869,11 @@ app.get("/dashboard/borrowBooks", nocache, function (req, res) {
             } else {
                 res.render('dashboard-borrow', { searchData: bookData[1], searchConfig: defSearchConfig, tot_count: tot_count, noOfSearchResults: bookData[0] });
             }
-        }).catch(err => console.log(err+"sdfsd"));
-    } else { 
-        res.redirect('/login');
-    }
-});
-
-
-app.get("/dashboard/pendingBooks", nocache, function (req, res) { 
-    if (req.cookies['Student']) {
-        let page = req.query.page == undefined ? 1 : Number(req.query.page);
-        getCurrentBooksData(req.cookies['Student'], page).then(function (currBookData) {
-            defCurrBorrowedBooks = (currBookData[0] != "NIL") ? currBookData[0] : {};
-            let tot_count = defCurrBorrowedBooks.length == 0 ? [1, page] : [Math.ceil(currBookData[1] / pageOffset), page];
-            if (page > tot_count[0] && tot_count[0] > 0) {
-                res.redirect('/dashboard/pendingBooks?page=1');
-            } else {
-                res.render('dashboard-pending', { currBooksData: defCurrBorrowedBooks, tot_count: tot_count });
-            }
-        }).catch(err2 => console.log(err2));
-
-    } else { 
-        res.redirect('/login');
-    }
-});
-
-
-app.get("/dashboard/borrowedBooks", nocache, function (req, res) { 
-    if (req.cookies['Student']) {
-        let page = req.query.page == undefined ? 1 : Number(req.query.page);
-        getPrevBooksData(req.cookies['Student'], page).then(function (prevBookData) {
-        
-            let tot_count = prevBookData[0] == 0 ? [1, page] : [Math.ceil(prevBookData[0] / pageOffset), page];
-            if (page > tot_count[0] && tot_count[0] > 0) {
-                res.redirect('/dashboard/borrowedBooks?page=1');
-            } else { 
-                res.render('dashboard-borrowed', { prevBooksData: prevBookData[1], tot_count: tot_count });
-            }     
         }).catch(err => console.log(err));
-
     } else { 
         res.redirect('/login');
     }
 });
-
 
 // Processing the search from dashboard page to server and back
 app.post("/dashboard/borrowBooks", validateSearchConfig, function (req, res) {
@@ -909,6 +890,43 @@ app.post("/dashboard/borrowBooks", validateSearchConfig, function (req, res) {
     }).catch(errDB => console.log(errDB));       
 });
 
+
+app.get("/dashboard/pendingBooks", nocache, function (req, res) { 
+    if (req.cookies['Student']) {
+        let page = req.query.page == undefined ? 1 : Number(req.query.page);
+        getUserBookData(req.cookies['Student'], 2, page).then(function (currBookData) {
+            defCurrBorrowedBooks = currBookData[0]  !=  0 ? currBookData[1] : {};
+            let tot_count = defCurrBorrowedBooks.length == 0 ? [1, page] : [Math.ceil(currBookData[0] / pageOffset), page];
+            if (page > tot_count[0] && tot_count[0] > 0) {
+                res.redirect('/dashboard/pendingBooks?page=1');
+            } else {
+                res.render('dashboard-pending', { currBooksData: defCurrBorrowedBooks, tot_count: tot_count });
+            }
+        }).catch(err2 => console.log(err2));
+
+    } else { 
+        res.redirect('/login');
+    }
+});
+
+
+app.get("/dashboard/borrowedBooks", nocache, function (req, res) { 
+    if (req.cookies['Student']) {
+        let page = req.query.page == undefined ? 1 : Number(req.query.page);
+        getUserBookData(req.cookies['Student'], 3, page).then(function (prevBookData) {
+            let tot_count = prevBookData[0] == 0 ? [1, page] : [Math.ceil(prevBookData[0] / pageOffset), page];
+            if (page > tot_count[0] && tot_count[0] > 0) {
+                res.redirect('/dashboard/borrowedBooks?page=1');
+            } else { 
+                res.render('dashboard-borrowed', { prevBooksData: prevBookData[1], tot_count: tot_count });
+            }     
+        }).catch(err => console.log(err));
+    } else { 
+        res.redirect('/login');
+    }
+});
+
+
 //Selecting and update the no of copies
 app.post("/dashboard/confirmBooks", nocache, function (req, res) {
     if (req.body['booksSelected']) {
@@ -916,9 +934,8 @@ app.post("/dashboard/confirmBooks", nocache, function (req, res) {
             if (status) {
                 getBookData(req.body['booksSelected'].split(" ")).then(function (bookData) {
                     if (bookData) {
-                        updateTransaction(req.cookies['Student'], req.body['booksSelected'].split(" ")).then(function (stat) {
+                        updateTransaction(req.cookies['Student'], 0, req.body['booksSelected'].split(" "), [], 0).then(function (stat) {
                             if (stat) {
-
                                 res.render('confirmBooks', { borrowedBookData: bookData });
                             } else { 
                                 res.redirect('/dashboard/borowBooks');
@@ -947,13 +964,16 @@ app.post("/dashboard/confirmBooks", nocache, function (req, res) {
 app.get("/staff/pendingBooks", nocache, function (req, res) { 
     if (req.cookies['Staff']) {
         let page = req.query.page == undefined ? 1 : Number(req.query.page);
-        getPendingBooks(true, page).then(function (pendingBooksData) {
+        getUserBookData(0, 2, page).then(function (pendingBooksData) {
+
             defPendingBooks = pendingBooksData[0] == 0 ? {} : pendingBooksData[1];
             let tot_count = defPendingBooks.length == 0 ? [1, page] : [Math.ceil(pendingBooksData[0] / pageOffset), page];
+            let toggle = req.query == {} ? "none" : req.query['update'];
+
             if (page > tot_count[0] && tot_count[0] > 0) {
                 res.redirect('/staff/pendingBooks?page=1');
             } else {
-                res.render('staff-pending', { pendingBooks: defPendingBooks, tot_count: tot_count });
+                res.render('staff-pending', { pendingBooks: defPendingBooks, tot_count: tot_count, toggleID: toggle });
             }
         }).catch(err1 => console.log(err1));
     }else { 
@@ -964,19 +984,57 @@ app.get("/staff/pendingBooks", nocache, function (req, res) {
 app.get("/staff/yetToBeBorrowedBooks", nocache, function (req, res) { 
     if (req.cookies['Staff']) {
         let page = req.query.page == undefined ? 1 : Number(req.query.page);
-        getPendingBooks(false, page).then(function (yBooksData) {
+        getUserBookData(0, 1, page).then(function (yBooksData) {
             defYetBorrowedBooks = yBooksData[0] == 0 ? {} : yBooksData[1];
             let tot_count = defYetBorrowedBooks.length == 0 ? [1, page] : [Math.ceil(yBooksData[0] / pageOffset), page];
+
+            let toggle = req.query == {} ? "none" : req.query['update'];
+
             if (page > tot_count[0] && tot_count[0] > 0) {
                 res.redirect('/staff/yetToBeBorrowedBooks?page=1');
             } else {
-                res.render('staff-borrow', { yetBorrowedBooks: defYetBorrowedBooks, tot_count: tot_count });
+                res.render('staff-borrow', { yetBorrowedBooks: defYetBorrowedBooks, tot_count: tot_count, toggleID: toggle });
             }
         }).catch(err1 => console.log(err1));
     }else { 
         res.redirect('/login');
     }
 });
+
+
+//Processing yet to be borrowed books in staff
+app.post("/processTransactions", function (req, res) {
+    let tempData = req.body.transactionData.split(" ");
+    let filteredTransactionData = [];
+    let redirect = "/staff/yetToBeBorrowedBooks?update=";
+    if (req.query.status == 2) { 
+        redirect = "/staff/pendingBooks?update=";
+    }
+    for (let i in tempData) {
+        filteredTransactionData.push(tempData[i].split(","));
+    }
+    updateTransaction(-1, req.query.status, [], filteredTransactionData, req.cookies['Staff']).then(function (stat) {
+        if (stat) {
+            res.redirect(redirect+"success");
+        } else { 
+            res.redirect(redirect+"failed");
+        }
+    }).catch(err => console.log(err));
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 app.get("/staff/addBook", nocache, function (req, res) { 
     if (req.cookies['Staff']) {
@@ -1107,15 +1165,7 @@ app.post("/processPendingBooks", function (req, res) {
     }).catch(err => console.log(err));
 });
 
-//Processing yet to be borrowed books in staff
-app.post("/processYetBorrowedBooks", function (req, res) {
-    var idAndisbn = req.body.yetBorrowedBooksData.split(",");
-    getStaffName(req.cookies['Staff']).then(function (staffName) { 
-        changeStatus(idAndisbn, staffName).then(function (stat) {
-            res.redirect('staff');
-        }).catch(err2 => console.log(err2));
-    }).catch(err => console.log(err));
-});
+
 
 //Logging out the user
 app.get("/logout", function (req, res) {

@@ -25,7 +25,7 @@
                         <% let pageOffset = 10; %>
                         <% let x = (tot_count[1]-1) * pageOffset;%>
                         <% for(let isbn in yetBorrowedBooks) { %>
-                            <tr id = "<%= yetBorrowedBooks[isbn]['library_id'] + ' ' + yetBorrowedBooks[isbn]['isbn'] %>">
+                            <tr id = "<%= yetBorrowedBooks[isbn]['library_id'] + ',' + yetBorrowedBooks[isbn]['isbn'] %>">
                                 <td>
                                     <%= x+1 %>
                                 </td>
@@ -44,16 +44,16 @@
                                 <td>
                                     <%= yetBorrowedBooks[isbn]['author'] %>
                                 </td>
-                                <td class="text-center">
+                                <td>
                                     <%= yetBorrowedBooks[isbn]['genre'] %>
                                 </td>
-                                <td class="text-center">
+                                <td>
                                     <%= yetBorrowedBooks[isbn]['year'] %>
                                 </td>
                                 <td>
                                     <%= yetBorrowedBooks[isbn]['isbn'] %>
                                 </td>
-                                <td class="text-center">
+                                <td>
                                     <%= "₹" + yetBorrowedBooks[isbn]['price'] %>
                                 </td>
                                 <td>
@@ -66,8 +66,8 @@
             </table>
 
             <div class="mt-4 ms-auto me-auto">
-                <form action="/processYetBorrowedBooks" method="post">
-                    <input type="text" name="yetBorrowedBooksData" id="yetBorrowedBooksDataInp">
+                <form action="/processTransactions?status=1" method="post">
+                    <input type="text" name="transactionData" id="yetBorrowedBooksDataInp">
                     <button class="btn dashboard-btn ms-auto me-auto" id="yetBorrowSubBtn" type="submit">Lend Books</button>
                 </form>
             </div>
@@ -113,6 +113,27 @@
     </div>
 
 
+    <div class="toast-container position-fixed bottom-0 end-0 p-3" id="toastDiv">
+        <div id="liveToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true" data-bs-animation="true" data-bs-delay="2000">
+            <div class="toast-header">
+                <% if(toggleID == "success") { %>
+                    <i class="fa-regular fa-circle-check" style="color: green;"></i>
+                <% } else { %>
+                    <i class="fa-regular fa-circle-xmark"  style="color: red;"></i>
+                <% } %>
+                <strong class="ms-1 me-auto">Library Database</strong>
+                <small>Just a min ago</small>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body">
+                <% if(toggleID == "success") { %>
+                    Updated data successfully!
+                <% } else { %>
+                    Oops! Error encountered, try again.
+                <% } %>
+            </div>
+        </div>
+    </div>
 
     <script type="text/javascript" src="/staffScript.js"></script>
 <%- include('partials/footer') %>

@@ -25,10 +25,10 @@
                             <td><%= x+1 %></td>
                             <td><%= currBooksData[isbn]['name'] %></td>
                             <td><%= currBooksData[isbn]['author'] %></td>
-                            <td><%= isbn %></td>
-                            <td class="text-center"><%= currBooksData[isbn]['publication_date']%></td>
+                            <td><%= currBooksData[isbn]['isbn'] %></td>
+                            <td class="text-center"><%= currBooksData[isbn]['year']%></td>
                             <td class="text-center"><%= currBooksData[isbn]['genre'] %></td>
-                            <td><%= currBooksData[isbn]['dateBorrowed'] %></td>
+                            <td><%= currBooksData[isbn]['date_borrowed'] %></td>
                             <td class="text-center"><%= "₹" + currBooksData[isbn]['price'] %></td>    
                         </tr>
                 <% x++; } } %>

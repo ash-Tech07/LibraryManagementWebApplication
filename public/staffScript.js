@@ -4,6 +4,7 @@ var noOfPendBtnSelected = 0;
 var yetBorrowValArr = [];
 var noOfYetBorrowBtnSelected = 0;
 
+
 //Pending Books processing
 function processPendingBooks(btn, inpId) { 
 
@@ -23,7 +24,7 @@ function processPendingBooks(btn, inpId) {
     }
 
     //setting the value of selected books to form input
-    document.getElementById(inpId).value = pendValArr.join(",");
+    document.getElementById(inpId).value = pendValArr.join(" ");
 
     //Toggling the disablity of submit btn
     if (noOfPendBtnSelected >= 1) {
@@ -54,7 +55,7 @@ function processYetBorrowedBooks(btn, inpId) {
     }
 
     //setting the value of selected books to form input
-    document.getElementById(inpId).value = yetBorrowValArr.join(",");
+    document.getElementById(inpId).value = yetBorrowValArr.join(" ");
 
     //Toggling the disablity of submit btn
     if (noOfYetBorrowBtnSelected >= 1) {
@@ -64,3 +65,4 @@ function processYetBorrowedBooks(btn, inpId) {
     }
 
 }
+
