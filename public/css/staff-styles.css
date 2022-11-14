@@ -15,9 +15,9 @@ body{
     display: none;
 }
 
-#pendSubBtn, #yetBorrowSubBtn{
+/* #pendSubBtn, #yetBorrowSubBtn{
     display: none;
 }
 #pendSubBtn.enable, #yetBorrowSubBtn.enable{
     display: block;
-}
+} */

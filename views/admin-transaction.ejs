@@ -13,7 +13,7 @@
                 <th>Lib-ID</th>
                 <th>Isbn</th>
                 <th>Status</th>
-                <th>StaffName</th>
+                <th>Staff ID</th>
                 <th>Date Borrowed</th>
                 <th>Date Returned</th>
                 <th>Fine</th>
@@ -28,13 +28,13 @@
                     <% for (let i in deftransactionsDetails) {%>     
                     <tr>
                         <td class="text-center"><%= x+1 %></td>
-                        <td class="text-center"><%= deftransactionsDetails[i].libid %></td>
-                        <td class="text-center"><%= deftransactionsDetails[i].isbn %></td>
-                        <td class="text-center"><%= deftransactionsDetails[i].status %></td>
-                        <td class="text-center"><%= deftransactionsDetails[i].staffName %></td>
-                        <td class="text-center"><%= deftransactionsDetails[i].dateBorrowed %></td>
-                        <td class="text-center"><%= deftransactionsDetails[i].dateReturned %></td>
-                        <td class="text-center"><%= deftransactionsDetails[i].fine %></td>
+                        <td class="text-center"><%= deftransactionsDetails[i]["library_id"] %></td>
+                        <td class="text-center"><%= deftransactionsDetails[i]["isbn"] %></td>
+                        <td class="text-center"><%= deftransactionsDetails[i]["book_status"] %></td>
+                        <td class="text-center"><%= deftransactionsDetails[i]["staff_id"] %></td>
+                        <td class="text-center"><%= deftransactionsDetails[i]["date_borrowed"] %></td>
+                        <td class="text-center"><%= deftransactionsDetails[i]["date_returned"] %></td>
+                        <td class="text-center"><%= deftransactionsDetails[i]["fine"] %></td>
                         <td class="text-center">
                             <form action="/removeData?page=<%=tot_count[1]%>" method="post" onsubmit="return confirm('Are you sure you want to remove this book?');">
                                 <input type="text" value="<%= deftransactionsDetails[i].libid %>" name="isbn" class="hide">

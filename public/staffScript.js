@@ -60,8 +60,12 @@ function processYetBorrowedBooks(btn, inpId) {
     //Toggling the disablity of submit btn
     if (noOfYetBorrowBtnSelected >= 1) {
         document.getElementById("yetBorrowSubBtn").classList.add("enable");
+        document.getElementById("yetBorrowSubBtn").classList.remove("disable");
+
     } else {
         document.getElementById("yetBorrowSubBtn").classList.remove("enable");
+        document.getElementById("yetBorrowSubBtn").classList.add("disable");
+
     }
 
 }

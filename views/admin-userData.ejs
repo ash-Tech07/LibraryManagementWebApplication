@@ -28,22 +28,19 @@
                     <% let pageOffset = 10; %>
                     <% let x = (tot_count[1]-1) * pageOffset;%>
                     <% for (let i in userData) {%>     
-                    <tr>
+                    <tr id="<%=userData[i].library_id%>">
                         <td><%= x+1 %></td>
-                        <td><%= userData[i].firstName %></td>
-                        <td><%= userData[i].lastName %></td>
-                        <td class="text-center"><%= userData[i].email %></td>
-                        <td class="text-center"><%= userData[i].dob %></td>
-                        <td class="text-center"><%= userData[i].roll %></td>
-                        <td class="text-center"><%= userData[i].dept %></td>
-                        <td class="text-center"><%= userData[i].uniqueNum %></td>
-                        <td class="text-center"><%= userData[i].created %></td>
-                        <td class="text-center"><%= userData[i].libid %></td>
+                        <td><%= userData[i].first_name %></td>
+                        <td><%= userData[i].last_name %></td>
+                        <td><%= userData[i].email %></td>
+                        <td><%= userData[i].date_of_birth %></td>
+                        <td><%= userData[i].roll_no %></td>
+                        <td><%= userData[i].department %></td>
+                        <td><%= userData[i].unique_number %></td>
+                        <td><%= userData[i].created %></td>
+                        <td><%= userData[i].library_id %></td>
                         <td>
-                            <form action="/removeData?page=<%=tot_count[1]%>" method="post" onsubmit="return confirm('Are you sure you want to remove this book?');">
-                                <input type="text" value="<%= userData[i].libid %>" name="isbn" class="hide">
-                                <button type="submit" class="btn btn-outline-danger btn-sm">Remove</button>
-                            </form>
+                            <button type="button" class="btn btn-outline-danger btn-sm" id="bookBTN" onclick="addBooksToRemove(this)">Remove</button>
                         </td>
                     </tr>
 
@@ -54,6 +51,15 @@
         <% if (Object.keys(userData).length == 0) { %>
             <div class="info text-center ms-auto me-auto mt-2 warnings">Oops! No Books Found</div>
         <% } %>
+
+
+        <form action="/removeData?user=true" method="post" onsubmit="return confirm('Are you sure you want to remove this users?');">
+            <input type="text" name="libid" class="hide" id="bookRemoveINP">
+            <button type="submit" class="btn btn-outline-danger btn-sm disable m-auto mt-4 mb-5" id="bookRemoveFormBTN">Remove Books</button>
+        </form>
+
+
+
 
         <div class="page">
             <nav>
@@ -90,5 +96,5 @@
 
 </div>
 
-
+    <script type="text/javascript" src="/adminScript.js"></script>
 <%- include('partials/footer') %>

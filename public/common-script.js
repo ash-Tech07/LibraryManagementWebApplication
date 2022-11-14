@@ -87,46 +87,27 @@ else if (window.location.href.includes("confirmBooks")) {
     document.getElementById("main-nav-link2").href = "/logout";
 }
 else if (window.location.href.includes("bookData") && window.location.href.includes("admin")) {
-    document.getElementById("main-nav-link1").textContent = "STUDENT DATA";
-    document.getElementById("main-nav-link1").href = "/admin/studentData";
-    document.getElementById("main-nav-link2").textContent = "STAFF DATA";
-    document.getElementById("main-nav-link2").href = "/admin/staffData";
-    document.getElementById("main-nav-link3").textContent = "TRANSACTION DATA";
-    document.getElementById("main-nav-link3").href = "/admin/transactionData";
-    document.getElementById("main-nav-link4").textContent = "LOG OUT";
-    document.getElementById("main-nav-link4").href = "/logout";
+    document.getElementById("main-nav-link1").textContent = "USER DATA";
+    document.getElementById("main-nav-link1").href = "/admin/userData";
+    document.getElementById("main-nav-link2").textContent = "TRANSACTION DATA";
+    document.getElementById("main-nav-link2").href = "/admin/transactionData";
+    document.getElementById("main-nav-link3").textContent = "LOG OUT";
+    document.getElementById("main-nav-link3").href = "/logout";
 }
-else if (window.location.href.includes("studentData") && window.location.href.includes("admin")) {
+else if (window.location.href.includes("userData") && window.location.href.includes("admin")) {
     document.getElementById("main-nav-link1").textContent = "BOOKS DATA";
     document.getElementById("main-nav-link1").href = "/admin/bookData";
-    document.getElementById("main-nav-link2").textContent = "STAFF DATA";
-    document.getElementById("main-nav-link2").href = "/admin/staffData";
-    document.getElementById("main-nav-link3").textContent = "TRANSACTION DATA";
-    document.getElementById("main-nav-link3").href = "/admin/transactionData";
-    document.getElementById("main-nav-link4").textContent = "LOG OUT";
-    document.getElementById("main-nav-link4").href = "/logout";
-    document.getElementById("userDataHeading").textContent = "Student Data";
+    document.getElementById("main-nav-link2").textContent = "TRANSACTION DATA";
+    document.getElementById("main-nav-link2").href = "/admin/transactionData";
+    document.getElementById("main-nav-link3").textContent = "LOG OUT";
+    document.getElementById("main-nav-link3").href = "/logout";
 
-}
-else if (window.location.href.includes("staffData") && window.location.href.includes("admin")) {
-    document.getElementById("main-nav-link1").textContent = "BOOKS DATA";
-    document.getElementById("main-nav-link1").href = "/admin/bookData";
-    document.getElementById("main-nav-link2").textContent = "STUDENT DATA";
-    document.getElementById("main-nav-link2").href = "/admin/studentData";
-    document.getElementById("main-nav-link3").textContent = "TRANSACTION DATA";
-    document.getElementById("main-nav-link3").href = "/admin/transactionData";
-    document.getElementById("main-nav-link4").textContent = "LOG OUT";
-    document.getElementById("main-nav-link4").href = "/logout";
-    document.getElementById("userDataHeading").textContent = "Staff Data";
 }
 else if (window.location.href.includes("transactionData") && window.location.href.includes("admin")){
     document.getElementById("main-nav-link1").textContent = "BOOKS DATA";
     document.getElementById("main-nav-link1").href = "/admin/bookData";
-    document.getElementById("main-nav-link2").textContent = "STAFF DATA";
-    document.getElementById("main-nav-link2").href = "/admin/staffData";
-    document.getElementById("main-nav-link3").textContent = "STUDENT_DATA";
-    document.getElementById("main-nav-link3").href = "/admin/studentData";
-    document.getElementById("main-nav-link4").textContent = "LOG OUT";
-    document.getElementById("main-nav-link4").href = "/logout";
-    document.getElementById("userDataHeading").textContent = "Staff Data";
+    document.getElementById("main-nav-link2").textContent = "USER DATA";
+    document.getElementById("main-nav-link2").href = "/admin/userData";
+    document.getElementById("main-nav-link3").textContent = "LOG OUT";
+    document.getElementById("main-nav-link3").href = "/logout";
 }

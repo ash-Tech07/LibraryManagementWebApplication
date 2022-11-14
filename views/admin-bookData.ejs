@@ -24,30 +24,37 @@
                         <% let pageOffset = 10; %>
                         <% let x = (tot_count[1]-1) * pageOffset;%>
                         <% for (let i in bookDetails) {%>     
-                        <tr>
+                        <tr id="<%= bookDetails[i].isbn %>">
                             <td><%= x+1 %></td>
                             <td><%= bookDetails[i].isbn %></td>
                             <td><%= bookDetails[i].name %></td>
                             <td><%= bookDetails[i].author %></td>
-                            <td class="text-center"><%= bookDetails[i].publication_date.substring(0, 4) %></td>
+                            <td class="text-center"><%= bookDetails[i].year %></td>
                             <td class="text-center"><%= bookDetails[i].genre %></td>
                             <td class="text-center"><%= bookDetails[i].price %></td>
                             <td class="text-center"><%= bookDetails[i].noOfCopies %></td>
                             <td>
-                                <form action="/removeData?page=<%=page[0]%>" method="post" onsubmit="return confirm('Are you sure you want to remove this book?');">
-                                    <input type="text" value="<%= bookDetails[i].isbn %>" name="isbn" class="hide">
-                                    <button type="submit" class="btn btn-outline-danger btn-sm">Remove</button>
-                                </form>
+                                <button type="button" class="btn btn-outline-danger btn-sm" id="bookBTN" onclick="addBooksToRemove(this)">Remove</button>
                             </td>
                         </tr>
 
-                        <% x++;} }%>
+                    <% x++; } }%>
                 </tbody>
             </table>
 
             <% if (Object.keys(bookDetails).length == 0) { %>
                 <div class="info text-center ms-auto me-auto mt-2 warnings">Oops! No Books Found</div>
             <% } %>
+
+
+            
+                <form action="/removeData?book=true" method="post" onsubmit="return confirm('Are you sure you want to remove this book?');">
+                    <input type="text" name="isbn" class="hide" id="bookRemoveINP">
+                    <button type="submit" class="btn btn-outline-danger btn-sm disable m-auto mt-4 mb-5" id="bookRemoveFormBTN">Remove Books</button>
+                </form>
+
+
+
 
             <div class="page">
                 <nav>
@@ -83,5 +90,5 @@
         </div>
     </div>
 
-
+    <script type="text/javascript" src="/adminScript.js"></script>
 <%- include('partials/footer') %>
