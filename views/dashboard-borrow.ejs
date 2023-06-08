@@ -44,7 +44,7 @@
                     <% for (let data in searchData){ %>
                         <tr id="<%= searchData[data]['isbn'] %>A">
                             <td><%= x+1 %></td>
-                            <td><%= searchData[data]['name']+" " + tot_count %></td>
+                            <td style="text-align: left;"><%= searchData[data]['name']%></td>
                             <td class="text-center"><%= searchData[data]['author'] %></td>
                             <td class="text-center"><%= searchData[data]['year']%></td>
                             <td class="text-center"><%= searchData[data]['genre'] %></td>
@@ -82,13 +82,46 @@
 
                     <div class="pages" id="">
                         <% if (tot_count[0] != 0) { %>
-                            <% for(let i = 1; i <= tot_count[0]; i++) { %>
+
+                            <% if (page > 3) { %>
+                                <% for(let i = 1; i <= 3; i++) { %>
+                                    <% if (tot_count[1] == i) { %>
+                                        <li class="page-item active" id="pg<%= i %>"><a class="page-link" href="/dashboard/borrowBooks?page=<%= i %>"><%= i %></a></li>
+                                    <% } else { %>
+                                        <li class="page-item" id="pg<%= i %>"><a class="page-link" href="/dashboard/borrowBooks?page=<%= i %>"><%= i %></a></li>
+                                    <% } %>
+                                <% } %>
+
+                                <% for(let i = 1; i < 3; i++) { %>
+                                    <li class="page-item disabled" id="pg<%= i %>"><a class="page-link" href="#">.</a></li>
+                                <% } %>
+                            <% } %>
+
+                            
+
+                            <% for(let i = Math.max(1, page-1); i <= Math.min(page+1, tot_count[0]); i++) { %>
                                 <% if (tot_count[1] == i) { %>
                                     <li class="page-item active" id="pg<%= i %>"><a class="page-link" href="/dashboard/borrowBooks?page=<%= i %>"><%= i %></a></li>
                                 <% } else { %>
                                     <li class="page-item" id="pg<%= i %>"><a class="page-link" href="/dashboard/borrowBooks?page=<%= i %>"><%= i %></a></li>
                                 <% } %>
-                        <% } } %>
+                            <% } %>
+
+                            <% if (page < tot_count[0]-2) { %>
+                                <% for(let i = 1; i < 3; i++) { %>
+                                    <li class="page-item disabled" id="pg<%= i %>"><a class="page-link" href="#">.</a></li>
+                                <% } %>
+
+                                <% for(let i = tot_count[0]-2; i <= tot_count[0]; i++) { %>
+                                    <% if (tot_count[1] == i) { %>
+                                        <li class="page-item active" id="pg<%= i %>"><a class="page-link" href="/dashboard/borrowBooks?page=<%= i %>"><%= i %></a></li>
+                                    <% } else { %>
+                                        <li class="page-item" id="pg<%= i %>"><a class="page-link" href="/dashboard/borrowBooks?page=<%= i %>"><%= i %></a></li>
+                                    <% } %>
+                                <% } %>
+                            <% } %>
+
+                        <% } %>
                     </div>
                 
                     <% if (tot_count[0] == tot_count[1] || tot_count[0] == 0) { %>

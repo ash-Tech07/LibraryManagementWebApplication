@@ -56,7 +56,7 @@
 
 
 
-            <div class="page">
+            <!-- <div class="page">
                 <nav>
                     <ul class="pagination justify-content-center" id="<%= tot_count[0] %>">
                         <% if (tot_count[1] == 1) { %>
@@ -74,6 +74,70 @@
                                         <li class="page-item" id="pg<%= i %>"><a class="page-link" href="/admin/bookData?page=<%= i %>"><%= i %></a></li>
                                     <% } %>
                             <% } } %>
+                        </div>
+                    
+                        <% if (tot_count[0] == tot_count[1] || tot_count[0] == 0) { %>
+                            <li class="page-item disabled"><a class="page-link"  id="next_btn">Next</a></li>
+                        <% } else { %>
+                            <li class="page-item">
+                                <a class="page-link" id="next_btn" href="/admin/bookData?page=<%= Number(tot_count[1])+1 %>">Next</a>
+                            </li>
+                        <% } %>
+                    </ul>
+                </nav>
+            </div> -->
+
+            <div class="page">
+                <nav>
+                    <ul class="pagination justify-content-center" id="<%= tot_count[0] %>">
+                        <% if (tot_count[1] == 1) { %>
+                            <li class="page-item disabled"><a class="page-link" href="#" tabindex="-1"aria-disabled="true">Previous</a></li>
+                        <% } else { %>
+                            <li class="page-item"><a class="page-link" href="/admin/bookData?page=<%= Number(tot_count[1])-1 %>">Previous</a></li>
+                        <% } %>
+    
+                        <div class="pages" id="">
+                            <% if (tot_count[0] != 0) { %>
+    
+                                <% if (page > 3) { %>
+                                    <% for(let i = 1; i <= 3; i++) { %>
+                                        <% if (tot_count[1] == i) { %>
+                                            <li class="page-item active" id="pg<%= i %>"><a class="page-link" href="/admin/bookData?page=<%= i %>"><%= i %></a></li>
+                                        <% } else { %>
+                                            <li class="page-item" id="pg<%= i %>"><a class="page-link" href="/admin/bookData?page=<%= i %>"><%= i %></a></li>
+                                        <% } %>
+                                    <% } %>
+    
+                                    <% for(let i = 1; i < 3; i++) { %>
+                                        <li class="page-item disabled" id="pg<%= i %>"><a class="page-link" href="#">.</a></li>
+                                    <% } %>
+                                <% } %>
+    
+                                
+    
+                                <% for(let i = Math.max(1, page-1); i <= Math.min(page+1, tot_count[0]); i++) { %>
+                                    <% if (tot_count[1] == i) { %>
+                                        <li class="page-item active" id="pg<%= i %>"><a class="page-link" href="/admin/bookData?page=<%= i %>"><%= i %></a></li>
+                                    <% } else { %>
+                                        <li class="page-item" id="pg<%= i %>"><a class="page-link" href="/admin/bookData?page=<%= i %>"><%= i %></a></li>
+                                    <% } %>
+                                <% } %>
+    
+                                <% if (page < tot_count[0]-2) { %>
+                                    <% for(let i = 1; i < 3; i++) { %>
+                                        <li class="page-item disabled" id="pg<%= i %>"><a class="page-link" href="#">.</a></li>
+                                    <% } %>
+    
+                                    <% for(let i = tot_count[0]-2; i <= tot_count[0]; i++) { %>
+                                        <% if (tot_count[1] == i) { %>
+                                            <li class="page-item active" id="pg<%= i %>"><a class="page-link" href="/admin/bookData?page=<%= i %>"><%= i %></a></li>
+                                        <% } else { %>
+                                            <li class="page-item" id="pg<%= i %>"><a class="page-link" href="/admin/bookData?page=<%= i %>"><%= i %></a></li>
+                                        <% } %>
+                                    <% } %>
+                                <% } %>
+    
+                            <% } %>
                         </div>
                     
                         <% if (tot_count[0] == tot_count[1] || tot_count[0] == 0) { %>

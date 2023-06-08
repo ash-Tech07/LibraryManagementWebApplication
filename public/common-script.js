@@ -82,7 +82,7 @@ else if (window.location.href.includes("addBook") && window.location.href.includ
 }
 else if (window.location.href.includes("confirmBooks")) {
     document.getElementById("main-nav-link1").textContent = "DASHBOARD";
-    document.getElementById("main-nav-link1").href = "/dashboard";
+    document.getElementById("main-nav-link1").href = "/dashboard/borrowBooks";
     document.getElementById("main-nav-link2").textContent = "LOG OUT";
     document.getElementById("main-nav-link2").href = "/logout";
 }

@@ -11,23 +11,20 @@ const { body, validationResult } = require("express-validator");
 const cookieParser = require("cookie-parser");
 const mongoose = require("mongoose");
 var schema = mongoose.Schema;
-const uri = "mongodb://localhost:27017/libraryData";
+const uri = "mongodb+srv://admin-ashwin:" + process.env.dbpass + "@cluster0.kiishes.mongodb.net/libraryData";
 const pageOffset = 10;
 
 
 //Required schemas
 const bookSchema = new schema(
     {
-        id: Number,
         name: String,
         author: String,
-        average_rating: Number,
+        rating: Number,
         isbn: String, 
-        isbn13: String,
-        language_code: String,
-        tot_pages: Number,
-        ratings_count: Number,
-        text_reviews_count: Number,
+        imageSmall: String,
+        imageMedium: String,
+        imageLarge: String,
         publication_date: Date,
         publisher: String, 
         genre: String, 
@@ -110,7 +107,7 @@ function nocache(req, res, next) {
 //Function to get the year from datetime
 function getYearFromDateTime(data) { 
     for (let i in data) { 
-        data[i]['year'] = new Date(data[i]['publication_date']).toISOString().split("T")[0].substring(0, 4);
+        data[i]['year'] = data[i]['publication_date'] ? new Date(data[i]['publication_date']).toISOString().split("T")[0].substring(0, 4) : "";
     }
     return data;
 }
@@ -332,7 +329,7 @@ function updateCopies(isbnArr, inc) {
         let val = inc == 0 ? -1 : 1;
         mongoose.connect(uri).then(
             () => { 
-                Book.updateMany({ isbn: { $in: isbnArr } }, { $inc: { 'noOfCopies': val } }, function (err, modifiedData) { 
+                Book.updateMany({ isbn: { $in: isbnArr } }, { $inc: { 'noOfCopies': val } }, function (err, modifiedData) {
                     if (err) {
                         return reject(false);
                     } else { 
@@ -395,6 +392,7 @@ function getUserBookData(id, status, page) {
                     for (let i in userData) {
                         finUserData[userData[i]['library_id']] = userData[i];
                     }
+                    
                     for (let i in transData) {
                         let temp = {};
                         temp['name'] = finBookData[transData[i]['isbn']]['name'];
@@ -686,7 +684,6 @@ app.post("/signUp", validateSignUpConfig, function (req, res) {
         delete userData['reg_btn'];
 
         if (userData['user_type'] == "Admin") { 
-            console.log(userData['admin_password']);
             admin_chk = bcrypt.compareSync(userData['admin_password'], process.env.admin);
         }
 
@@ -748,7 +745,7 @@ app.get("/dashboard/borrowBooks", nocache, function (req, res) {
             if (page > tot_count[0]  && tot_count[0] > 0) {
                 res.redirect('/dashboard/borrowBooks?page=' + tot_count[0]);
             } else {
-                res.render('dashboard-borrow', { searchData: bookData[1], searchConfig: defSearchConfig, tot_count: tot_count, noOfSearchResults: bookData[0] });
+                res.render('dashboard-borrow', { searchData: bookData[1], searchConfig: defSearchConfig, tot_count: tot_count, noOfSearchResults: bookData[0], page:page });
             }
         }).catch(err => console.log(err));
     } else { 
@@ -766,7 +763,7 @@ app.post("/dashboard/borrowBooks", validateSearchConfig, function (req, res) {
         if (page > tot_count[0]  && tot_count[0] > 0) {
             res.redirect('/dashboard/borrowBooks?page=' + tot_count[0]);
         } else {
-            res.render('dashboard-borrow', { searchData: searchResults[1], searchConfig: defSearchConfig, tot_count: tot_count, noOfSearchResults: searchResults[0] });
+            res.render('dashboard-borrow', { page:page, searchData: searchResults[1], searchConfig: defSearchConfig, tot_count: tot_count, noOfSearchResults: searchResults[0] });
         }
     }).catch(errDB => console.log(errDB));       
 });
@@ -775,7 +772,7 @@ app.post("/dashboard/borrowBooks", validateSearchConfig, function (req, res) {
 app.get("/dashboard/pendingBooks", nocache, function (req, res) { 
     if (req.cookies['Student']) {
         let page = req.query.page == undefined ? 1 : Number(req.query.page);
-        getUserBookData(req.cookies['Student'], 2, page).then(function (currBookData) {
+        getUserBookData(req.cookies['Student'], 1, page).then(function (currBookData) {
             defCurrBorrowedBooks = currBookData[0]  !=  0 ? currBookData[1] : {};
             let tot_count = defCurrBorrowedBooks.length == 0 ? [1, page] : [Math.ceil(currBookData[0] / pageOffset), page];
             if (page > tot_count[0] && tot_count[0] > 0) {
@@ -794,7 +791,7 @@ app.get("/dashboard/pendingBooks", nocache, function (req, res) {
 app.get("/dashboard/borrowedBooks", nocache, function (req, res) { 
     if (req.cookies['Student']) {
         let page = req.query.page == undefined ? 1 : Number(req.query.page);
-        getUserBookData(req.cookies['Student'], 3, page).then(function (prevBookData) {
+        getUserBookData(req.cookies['Student'], 2, page).then(function (prevBookData) {
             let tot_count = prevBookData[0] == 0 ? [1, page] : [Math.ceil(prevBookData[0] / pageOffset), page];
             if (page > tot_count[0] && tot_count[0] > 0) {
                 res.redirect('/dashboard/borrowedBooks?page=1');
@@ -954,7 +951,7 @@ app.get("/admin/bookData", nocache, function (req, res) {
             if (page > tot_count[0] && tot_count[0] > 0){
                 res.redirect('/admin/bookData?page=1');
             } else {
-                res.render('admin-bookData', { bookDetails: defbookDetails, tot_count: tot_count });
+                res.render('admin-bookData', { bookDetails: defbookDetails, tot_count: tot_count, page:page });
             }
 
         }).catch(err => console.log(err));
